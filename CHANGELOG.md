@@ -3,8 +3,10 @@
 ## [v0.1.1] - 2026-06-22
 
 - Added Paper theme with Claude-style warm off-white, charcoal, terracotta orange, soft blue, and olive green palette.
-- Added a main workbench theme button cycling through Light, Paper, and Dark modes.
+- Added a top-right workbench theme button cycling through Light, Paper, and Dark modes.
 - Persisted theme changes through user settings while preserving the existing settings panel theme selector.
+- Fixed Paper theme persistence by allowing `paper` in backend settings validation.
+- Removed the redundant workbench mode title text from the top bar.
 
 ## [v0.1.0] - 2026-06-22
 

@@ -7,8 +7,9 @@ v0.1 includes Writing Mode, Interactive Mode, structured lore, creative Agents, 
 ## v0.1.1 Update
 
 - Added Paper Mode with a reading-friendly palette centered on warm off-white, charcoal, and terracotta orange.
-- Added a main workbench theme button cycling through Light Mode, Paper Mode, and Dark Mode.
-- Theme changes are saved to user settings and persist after refresh.
+- Added a top-right workbench theme button cycling through Light Mode, Paper Mode, and Dark Mode.
+- Theme changes are saved to user settings and persist after refresh; Paper Mode is now accepted by backend settings validation.
+- Removed the redundant top-bar workbench mode title for a cleaner shell.
 
 ## Quick Start
 

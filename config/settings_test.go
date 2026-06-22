@@ -251,6 +251,22 @@ func TestWriteSettingsFileFiltersInvalidTheme(t *testing.T) {
 	}
 }
 
+func TestWriteSettingsFileAllowsPaperTheme(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "config.toml")
+	in := Settings{OpenAIModel: "abc", Theme: "paper"}
+	if err := WriteSettingsFile(p, in); err != nil {
+		t.Fatal(err)
+	}
+	out, err := ReadSettingsFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.Theme != "paper" {
+		t.Fatalf("paper theme should be preserved: %q", out.Theme)
+	}
+}
+
 func TestWriteSettingsFileFiltersInvalidMotionIntensity(t *testing.T) {
 	dir := t.TempDir()
 	p := filepath.Join(dir, "config.toml")

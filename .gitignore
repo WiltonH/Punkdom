@@ -3,6 +3,7 @@
 playground
 output/
 dist/
+*.tsbuildinfo
 log/
 .cache/
 .punkdom/

@@ -136,7 +136,6 @@ export function WorkbenchShell({
   const agentsActive = mode === 'agents' && !settingsOpen
   const automationsActive = mode === 'automations' && !settingsOpen
   const fullWorkspacePanelVisible = settingsOpen || versionsVisible || mode === 'skills' || mode === 'agents' || mode === 'automations' || (mode === 'ide' && (loreVisible || tellerVisible))
-  const modeLabel = settingsOpen ? t('workbench.mode.settings') : versionsVisible ? t('workbench.activity.versions') : mode === 'interactive' ? t('workbench.mode.interactive') : mode === 'books' ? t('workbench.mode.books') : mode === 'skills' ? t('workbench.mode.skills') : mode === 'agents' ? t('workbench.mode.agents') : mode === 'automations' ? t('workbench.mode.automations') : t('workbench.mode.ide')
   const navigationMode = mode === 'books' || mode === 'skills' || mode === 'agents' || mode === 'automations' ? booksReturnMode : mode
   const activityOrderScope: ActivityOrderScope = navigationMode === 'interactive' ? 'interactive' : 'ide'
   const activityOrder = activityOrders[activityOrderScope]
@@ -397,7 +396,6 @@ export function WorkbenchShell({
         >
           <ThemeIcon className="h-4 w-4" />
         </TooltipIconButton>
-        <span>{modeLabel}</span>
       </div>
     </header>
   )
@@ -465,15 +463,6 @@ export function WorkbenchShell({
       <header className="punkdom-mobile-topbar punkdom-topbar shrink-0 border-b border-[var(--punkdom-border)] px-3 py-2">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="shrink-0 font-semibold text-[var(--punkdom-text)]">Punkdom</div>
-          <TooltipIconButton
-            label={themeButtonLabel}
-            aria-label={themeButtonLabel}
-            title={themeButtonLabel}
-            onClick={onCycleAppTheme}
-            className="punkdom-icon-button h-8 w-8 shrink-0"
-          >
-            <ThemeIcon className="h-4 w-4" />
-          </TooltipIconButton>
           <LayoutGroup id="workbench-mobile-mode-switch">
             <div className="flex h-8 shrink-0 items-center rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-0.5" aria-label={t('workbench.modeSwitch')}>
               <button
@@ -494,11 +483,19 @@ export function WorkbenchShell({
               </button>
             </div>
           </LayoutGroup>
+          <TooltipIconButton
+            label={themeButtonLabel}
+            aria-label={themeButtonLabel}
+            title={themeButtonLabel}
+            onClick={onCycleAppTheme}
+            className="punkdom-icon-button h-8 w-8 shrink-0"
+          >
+            <ThemeIcon className="h-4 w-4" />
+          </TooltipIconButton>
         </div>
         <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-[var(--punkdom-text-faint)]" title={workspace || currentBookName}>
           <BookOpen className="h-3.5 w-3.5 shrink-0 text-[var(--punkdom-text-muted)]" />
           <span className="min-w-0 flex-1 truncate font-medium text-[var(--punkdom-text-muted)]">{currentBookName}</span>
-          <span className="shrink-0 text-[var(--punkdom-text-faint)]">{modeLabel}</span>
         </div>
       </header>
     )

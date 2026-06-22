@@ -25,7 +25,7 @@ type Settings struct {
 
 	// 路径
 	SkillsDir    string `toml:"skills_dir,omitempty" json:"skills_dir,omitempty"`
-	PunkdomDir      string `toml:"punkdom_dir,omitempty" json:"punkdom_dir,omitempty"`
+	PunkdomDir   string `toml:"punkdom_dir,omitempty" json:"punkdom_dir,omitempty"`
 	BackendPort  *int   `toml:"backend_port,omitempty" json:"backend_port,omitempty"`
 	FrontendPort *int   `toml:"frontend_port,omitempty" json:"frontend_port,omitempty"`
 
@@ -77,7 +77,7 @@ func DefaultSettings() Settings {
 		OpenAIModel:                 "deepseek-v4-pro",
 		OpenAIContextWindowTokens:   intPtr(DefaultContextWindowTokens),
 		SkillsDir:                   "./skills",
-		PunkdomDir:                     "./.punkdom",
+		PunkdomDir:                  "./.punkdom",
 		BackendPort:                 intPtr(8080),
 		FrontendPort:                intPtr(5173),
 		AutoSaveEnabled:             boolPtr(true),
@@ -263,7 +263,7 @@ type LayeredSettings struct {
 
 // SettingsPaths 是设置页只读展示的真实配置路径。
 type SettingsPaths struct {
-	PunkdomDir         string `json:"punkdom_dir"`
+	PunkdomDir      string `json:"punkdom_dir"`
 	UserConfig      string `json:"user_config"`
 	WorkspaceConfig string `json:"workspace_config"`
 }
@@ -351,7 +351,7 @@ func LoadLayeredWithGlobal(punkdomDir, workspace string, global Settings) (Layer
 		Workspace: ws,
 		Effective: eff,
 		Paths: SettingsPaths{
-			PunkdomDir:         punkdomDir,
+			PunkdomDir:      punkdomDir,
 			UserConfig:      UserConfigPath(punkdomDir),
 			WorkspaceConfig: WorkspaceConfigPath(workspace),
 		},
@@ -407,7 +407,7 @@ func normalizeLanguage(language string) string {
 
 func normalizeTheme(theme string) string {
 	switch theme {
-	case "", "system", "dark", "light":
+	case "", "system", "dark", "light", "paper":
 		return theme
 	default:
 		return ""
