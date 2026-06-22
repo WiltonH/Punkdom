@@ -1,8 +1,8 @@
 # Punkdom
 
-Punkdom v0.1 is a local-first AI creative workspace. This version is a deeply renamed functional replica of [alfredxw/nova](https://github.com/alfredxw/nova) at commit `8e4528c48875e0fdaacc5548b1b2ad197259fff6`, used as the initial baseline for future Punkdom development.
+Punkdom v0.1 is a local-first AI creative workspace for novels, interactive storytelling, and long-form creative projects.
 
-v0.1 keeps Nova's existing behavior: Writing Mode, Interactive Mode, structured lore, creative Agents, Skills, automations, version management, novel import, character-card import, settings, and local workspace management.
+v0.1 includes Writing Mode, Interactive Mode, structured lore, creative Agents, Skills, automations, version management, novel import, character-card import, settings, and local workspace management.
 
 ## Quick Start
 
@@ -89,6 +89,6 @@ Build:
 ./build.sh
 ```
 
-## Attribution
+## License
 
-Punkdom v0.1 is derived from Nova by alfredxw. See [NOTICE](./NOTICE) for attribution details. The upstream project is licensed under Apache-2.0, and this repository preserves the license in [LICENSE](./LICENSE).
+Punkdom is licensed under Apache-2.0. See [LICENSE](./LICENSE) for details.

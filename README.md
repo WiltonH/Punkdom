@@ -1,6 +1,8 @@
 # Punkdom
 
-Punkdom v0.1 是一个本地优先的 AI 创作工作台。
+Punkdom v0.1 是一个本地优先的 AI 创作工作台，用于小说、互动叙事和长篇创意项目的结构化生产。
+
+v0.1 提供写作模式、互动模式、结构化资料库、创作 Agent、Skills、自动化、版本管理、小说导入、角色卡导入、设置和本地 workspace 管理。
 
 ## Quick Start
 
@@ -87,6 +89,6 @@ my-project/
 ./build.sh
 ```
 
-## Attribution
+## License
 
-Punkdom v0.1 is derived from Nova by alfredxw. See [NOTICE](./NOTICE) for attribution details. The upstream project is licensed under Apache-2.0, and this repository preserves the license in [LICENSE](./LICENSE).
+Punkdom is licensed under Apache-2.0. See [LICENSE](./LICENSE) for details.
