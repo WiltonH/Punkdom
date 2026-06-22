@@ -32,6 +32,7 @@ const workbench = {
   'workbench.status.idle': '空闲',
   'workbench.status.streaming': '生成中',
   'workbench.status.summary': '《{{title}}》 · {{chapters}} 章 · {{words}} 字',
+  'workbench.theme.toggle': '当前：{{current}}，切换到{{next}}',
   'workbench.untitled': '未命名',
 } as const
 

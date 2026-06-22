@@ -96,6 +96,7 @@ const settings = {
   'settings.title': 'Settings',
   'settings.theme.dark': 'Dark',
   'settings.theme.light': 'Light',
+  'settings.theme.paper': 'Paper',
   'settings.theme.system': 'System',
   'settings.motion.system': 'Follow System',
   'settings.motion.full': 'Full',

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { BookOpen, Bot, Clock3, Database, History, MessageSquareText, NotebookText, PanelLeft, PenLine, Settings, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { BookOpen, Bot, Clock3, Database, FileText, History, MessageSquareText, Moon, NotebookText, PanelLeft, PenLine, Settings, SlidersHorizontal, Sparkles, Sun } from 'lucide-react'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { WorkspaceLayout } from '@/components/layout/workspace-layout'
 import { WorkspaceMobileLayout, type MobileNavItem } from '@/components/layout/workspace-mobile-layout'
@@ -27,6 +27,7 @@ interface WorkbenchShellProps {
   isStreaming: boolean
   projectVisible: boolean
   activityBarExpanded: boolean
+  appTheme: AppTheme
   rightPanel: RightPanel
   settingsOpen: boolean
   interactiveSubmode: InteractiveSubmode
@@ -35,6 +36,7 @@ interface WorkbenchShellProps {
   rightPanelContent: ReactNode
   onSetMode: (mode: WorkspaceMode) => void
   onToggleActivityBarExpanded: () => void
+  onCycleAppTheme: () => void
   onSetInteractiveSubmode: (mode: InteractiveSubmode) => void
   onSetRightPanel: (panel: RightPanel) => void
   onToggleSettings: () => void
@@ -44,6 +46,7 @@ interface WorkbenchShellProps {
 type ActivityItemId = 'writing' | 'story' | 'timeline' | 'memory' | 'lore' | 'teller' | 'versions' | 'books' | 'skills' | 'agents' | 'automations'
 type ActivityOrderScope = 'ide' | 'interactive'
 type SortableActivityItemId = `${ActivityOrderScope}:${ActivityItemId}`
+type AppTheme = 'light' | 'paper' | 'dark'
 
 interface ActivityItem {
   id: ActivityItemId
@@ -76,6 +79,7 @@ export function WorkbenchShell({
   isStreaming,
   projectVisible,
   activityBarExpanded,
+  appTheme,
   rightPanel,
   settingsOpen,
   interactiveSubmode,
@@ -84,6 +88,7 @@ export function WorkbenchShell({
   rightPanelContent,
   onSetMode,
   onToggleActivityBarExpanded,
+  onCycleAppTheme,
   onSetInteractiveSubmode,
   onSetRightPanel,
   onToggleSettings,
@@ -135,6 +140,11 @@ export function WorkbenchShell({
   const navigationMode = mode === 'books' || mode === 'skills' || mode === 'agents' || mode === 'automations' ? booksReturnMode : mode
   const activityOrderScope: ActivityOrderScope = navigationMode === 'interactive' ? 'interactive' : 'ide'
   const activityOrder = activityOrders[activityOrderScope]
+  const themeButtonLabel = t('workbench.theme.toggle', {
+    current: t(themeLabelKey(appTheme)),
+    next: t(themeLabelKey(nextAppTheme(appTheme))),
+  })
+  const ThemeIcon = themeIconFor(appTheme)
 
   const closeSettingsIfOpen = () => {
     if (settingsOpen) onCloseSettings()
@@ -378,6 +388,15 @@ export function WorkbenchShell({
         <span className="truncate font-medium text-[var(--punkdom-text)]">{currentBookName}</span>
       </div>
       <div className="punkdom-ui-compact flex items-center justify-end gap-2 text-[var(--punkdom-text-faint)]">
+        <TooltipIconButton
+          label={themeButtonLabel}
+          aria-label={themeButtonLabel}
+          title={themeButtonLabel}
+          onClick={onCycleAppTheme}
+          className="punkdom-icon-button h-7 w-7"
+        >
+          <ThemeIcon className="h-4 w-4" />
+        </TooltipIconButton>
         <span>{modeLabel}</span>
       </div>
     </header>
@@ -446,6 +465,15 @@ export function WorkbenchShell({
       <header className="punkdom-mobile-topbar punkdom-topbar shrink-0 border-b border-[var(--punkdom-border)] px-3 py-2">
         <div className="flex min-w-0 items-center justify-between gap-2">
           <div className="shrink-0 font-semibold text-[var(--punkdom-text)]">Punkdom</div>
+          <TooltipIconButton
+            label={themeButtonLabel}
+            aria-label={themeButtonLabel}
+            title={themeButtonLabel}
+            onClick={onCycleAppTheme}
+            className="punkdom-icon-button h-8 w-8 shrink-0"
+          >
+            <ThemeIcon className="h-4 w-4" />
+          </TooltipIconButton>
           <LayoutGroup id="workbench-mobile-mode-switch">
             <div className="flex h-8 shrink-0 items-center rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-0.5" aria-label={t('workbench.modeSwitch')}>
               <button
@@ -617,6 +645,24 @@ function ActivityIconBadge({ count, children }: { count: number; children: React
       )}
     </span>
   )
+}
+
+function nextAppTheme(theme: AppTheme): AppTheme {
+  if (theme === 'light') return 'paper'
+  if (theme === 'paper') return 'dark'
+  return 'light'
+}
+
+function themeLabelKey(theme: AppTheme) {
+  if (theme === 'light') return 'settings.theme.light'
+  if (theme === 'paper') return 'settings.theme.paper'
+  return 'settings.theme.dark'
+}
+
+function themeIconFor(theme: AppTheme) {
+  if (theme === 'light') return Sun
+  if (theme === 'paper') return FileText
+  return Moon
 }
 
 function sortActivityItems(items: ActivityItem[], order: ActivityItemId[], defaultOrder: ActivityItemId[]) {

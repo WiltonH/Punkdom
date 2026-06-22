@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.1.1] - 2026-06-22
+
+- Added Paper theme with Claude-style warm off-white, charcoal, terracotta orange, soft blue, and olive green palette.
+- Added a main workbench theme button cycling through Light, Paper, and Dark modes.
+- Persisted theme changes through user settings while preserving the existing settings panel theme selector.
+
 ## [v0.1.0] - 2026-06-22
 
 - Imported Nova commit `8e4528c48875e0fdaacc5548b1b2ad197259fff6` as the Punkdom v0.1 functional baseline.

@@ -96,6 +96,7 @@ const settings = {
   'settings.title': '设置',
   'settings.theme.dark': '深色',
   'settings.theme.light': '浅色',
+  'settings.theme.paper': '纸张',
   'settings.theme.system': '跟随系统',
   'settings.motion.system': '跟随系统',
   'settings.motion.full': '完整',

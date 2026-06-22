@@ -12,11 +12,12 @@ import { Toaster as Sonner, type ToasterProps } from "sonner"
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "dark" } = useTheme()
+  const sonnerTheme = theme === "paper" ? "light" : theme
 
   return (
     <Sonner
       {...props}
-      theme={theme as ToasterProps["theme"]}
+      theme={sonnerTheme as ToasterProps["theme"]}
       className="toaster group"
       richColors={false}
       icons={{

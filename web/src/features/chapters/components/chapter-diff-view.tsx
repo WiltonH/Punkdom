@@ -20,7 +20,7 @@ export function ChapterDiffView({
 }: ChapterDiffViewProps) {
   const [compact, setCompact] = useState(false)
   const { resolvedTheme } = useTheme()
-  const monacoTheme = resolvedTheme === 'light' ? 'light' : 'vs-dark'
+  const monacoTheme = resolvedTheme === 'light' || resolvedTheme === 'paper' ? 'light' : 'vs-dark'
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return

@@ -32,6 +32,7 @@ const workbench = {
   'workbench.status.idle': 'Idle',
   'workbench.status.streaming': 'Generating',
   'workbench.status.summary': '{{title}} · {{chapters}} chapters · {{words}} words',
+  'workbench.theme.toggle': 'Current: {{current}}. Switch to {{next}}',
   'workbench.untitled': 'Untitled',
 } as const
 

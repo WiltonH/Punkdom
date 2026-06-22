@@ -40,6 +40,7 @@ interface ModeRouterProps {
   isStreaming: boolean
   projectVisible: boolean
   activityBarExpanded: boolean
+  appTheme: 'light' | 'paper' | 'dark'
   rightPanel: RightPanel
   settingsOpen: boolean
   interactiveRightVisible: boolean
@@ -69,6 +70,7 @@ interface ModeRouterProps {
   textSelections: TextSelection[]
   onSetMode: (mode: WorkspaceMode) => void
   onToggleActivityBarExpanded: () => void
+  onCycleAppTheme: () => void
   onToggleProjectVisible: () => void
   onSetRightPanel: (panel: RightPanel) => void
   onToggleSettings: () => void
@@ -120,6 +122,7 @@ export function ModeRouter(props: ModeRouterProps) {
     isStreaming,
     projectVisible,
     activityBarExpanded,
+    appTheme,
     rightPanel,
     settingsOpen,
     interactiveRightVisible,
@@ -149,6 +152,7 @@ export function ModeRouter(props: ModeRouterProps) {
     textSelections,
     onSetMode,
     onToggleActivityBarExpanded,
+    onCycleAppTheme,
     onToggleProjectVisible,
     onSetRightPanel,
     onToggleSettings,
@@ -558,6 +562,7 @@ export function ModeRouter(props: ModeRouterProps) {
       isStreaming={isStreaming}
       projectVisible={projectVisible}
       activityBarExpanded={activityBarExpanded}
+      appTheme={appTheme}
       rightPanel={rightPanel}
       settingsOpen={settingsOpen}
       interactiveSubmode={interactiveSubmode}
@@ -566,6 +571,7 @@ export function ModeRouter(props: ModeRouterProps) {
       rightPanelContent={rightPanelContent}
       onSetMode={onSetMode}
       onToggleActivityBarExpanded={onToggleActivityBarExpanded}
+      onCycleAppTheme={onCycleAppTheme}
       onSetInteractiveSubmode={setInteractiveSubmode}
       onSetRightPanel={onSetRightPanel}
       onToggleSettings={onToggleSettings}

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
-import { fetchSettings } from '@/features/settings/api'
+import { fetchSettings, updateUserSettings } from '@/features/settings/api'
 import { applyFontSettings, fontSettingsFromEffective } from '@/features/settings/font-variables'
 import { getLoreItems, importCharacterCard, previewCharacterCard, type CharacterCardPreview, type LoreItem, type WorkspaceSearchResult } from '@/lib/api'
 import { CommandPalette } from '@/components/common/command-palette'
@@ -37,13 +37,15 @@ const APP_VERSION = __APP_VERSION__
 const MAX_OPEN_TABS_FALLBACK = 5
 const AUTO_SAVE_ENABLED_FALLBACK = true
 const AUTO_SAVE_DELAY_FALLBACK_MS = 1500
+const APP_THEME_SEQUENCE = ['light', 'paper', 'dark'] as const
+type AppTheme = typeof APP_THEME_SEQUENCE[number]
 type SidebarView = 'outline' | 'files' | 'search'
 type WritingRightPanel = Extract<RightPanel, 'ai'> | null
 type BooksReturnMode = 'ide' | 'interactive'
 
 function App() {
   const { t } = useTranslation()
-  const { setTheme } = useTheme()
+  const { theme, resolvedTheme, setTheme } = useTheme()
   const [projectVisible, setProjectVisible] = useState(() => readLayoutBoolean(PROJECT_VISIBLE_KEY, true))
   const [activityBarExpanded, setActivityBarExpanded] = useState(() => readLayoutBoolean(ACTIVITY_BAR_EXPANDED_KEY, false))
   const [interactiveRightVisible, setInteractiveRightVisible] = useState(() => readLayoutBoolean(INTERACTIVE_RIGHT_VISIBLE_KEY, true))
@@ -510,6 +512,17 @@ function App() {
     setSidebarView('search')
   }, [setMode])
 
+  const appTheme = normalizeVisibleAppTheme(theme || resolvedTheme)
+  const handleCycleAppTheme = useCallback(() => {
+    const currentIndex = APP_THEME_SEQUENCE.indexOf(appTheme)
+    const nextTheme = APP_THEME_SEQUENCE[(currentIndex + 1) % APP_THEME_SEQUENCE.length]
+    setTheme(nextTheme)
+    void fetchSettings()
+      .then((settings) => updateUserSettings({ ...settings.user, theme: nextTheme }))
+      .then(() => window.dispatchEvent(new CustomEvent('punkdom:settings-updated')))
+      .catch((error) => console.warn('保存主题配置失败', error))
+  }, [appTheme, setTheme])
+
   useWorkspaceHotkeys({
     onSave: triggerSave,
     onOpenCommand: () => setCommandOpen(true),
@@ -539,6 +552,7 @@ function App() {
         isStreaming={isStreaming}
         projectVisible={projectVisible}
         activityBarExpanded={activityBarExpanded}
+        appTheme={appTheme}
         rightPanel={rightPanel}
         settingsOpen={settingsOpen}
         interactiveRightVisible={interactiveRightVisible}
@@ -568,6 +582,7 @@ function App() {
         textSelections={textSelections}
         onSetMode={handleSetMode}
         onToggleActivityBarExpanded={() => setActivityBarExpanded((value) => !value)}
+        onCycleAppTheme={handleCycleAppTheme}
         onToggleProjectVisible={() => setProjectVisible((value) => !value)}
         onSetRightPanel={handleSetRightPanel}
         onToggleSettings={() => setSettingsOpen((open) => !open)}
@@ -668,7 +683,12 @@ function toWritingRightPanel(panel: RightPanel): WritingRightPanel {
 }
 
 function normalizeAppTheme(theme?: string) {
-  if (theme === 'light' || theme === 'dark' || theme === 'system') return theme
+  if (theme === 'light' || theme === 'paper' || theme === 'dark' || theme === 'system') return theme
+  return 'dark'
+}
+
+function normalizeVisibleAppTheme(theme?: string | null): AppTheme {
+  if (theme === 'light' || theme === 'paper' || theme === 'dark') return theme
   return 'dark'
 }
 

@@ -47,4 +47,11 @@ describe('ChapterDiffView', () => {
 
     expect(screen.getByTestId('diff-editor')).toHaveAttribute('data-theme', 'light')
   })
+
+  it('uses the light Monaco theme when the app theme is paper', () => {
+    themeState.resolvedTheme = 'paper'
+    render(<ChapterDiffView original="旧章节" modified="新章节" />)
+
+    expect(screen.getByTestId('diff-editor')).toHaveAttribute('data-theme', 'light')
+  })
 })

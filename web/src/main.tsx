@@ -28,7 +28,7 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem themes={['light', 'dark']}>
+      <ThemeProvider attribute="data-theme" defaultTheme="dark" enableSystem themes={['light', 'paper', 'dark']}>
         <TooltipProvider>
           <RuntimeErrorBoundary>
             <App />

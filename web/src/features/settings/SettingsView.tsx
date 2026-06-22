@@ -817,8 +817,9 @@ function LanguageSelect({ label, value, effective, onChange }: {
 }
 
 const THEME_OPTIONS = [
-  { value: 'dark', labelKey: 'settings.theme.dark' },
   { value: 'light', labelKey: 'settings.theme.light' },
+  { value: 'paper', labelKey: 'settings.theme.paper' },
+  { value: 'dark', labelKey: 'settings.theme.dark' },
   { value: 'system', labelKey: 'settings.theme.system' },
 ] as const
 
