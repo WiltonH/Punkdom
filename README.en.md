@@ -4,6 +4,12 @@ Punkdom v0.1 is a local-first AI creative workspace for novels, interactive stor
 
 v0.1 includes Writing Mode, Interactive Mode, structured lore, creative Agents, Skills, automations, version management, novel import, character-card import, settings, and local workspace management.
 
+## v0.1.1 Update
+
+- Added Paper Mode with a reading-friendly palette centered on warm off-white, charcoal, and terracotta orange.
+- Added a main workbench theme button cycling through Light Mode, Paper Mode, and Dark Mode.
+- Theme changes are saved to user settings and persist after refresh.
+
 ## Quick Start
 
 Requirements: Go 1.26+, Node.js 20+, and pnpm.
@@ -46,6 +52,14 @@ export PUNKDOM_FRONTEND_PORT="5173"
 ```
 
 Use `punkdom_dir` in `config.toml` for the startup-level Punkdom data directory. User-level and workspace-level settings ignore this locator field.
+
+## Themes
+
+Punkdom includes three main interface themes:
+
+- Light Mode
+- Paper Mode: warm off-white `#faf9f5`, light greige `#e8e6dc`, charcoal `#141413`, warm gray `#b0aea5`, terracotta orange `#d97757`, soft blue `#6a9bcc`, and olive green `#788c5d`
+- Dark Mode
 
 ## Workspace
 
