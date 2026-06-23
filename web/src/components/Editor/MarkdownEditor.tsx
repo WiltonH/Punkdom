@@ -9,7 +9,7 @@ import { Markdown } from '@tiptap/markdown'
 import type { Node as ProseMirrorNode } from '@tiptap/pm/model'
 import { Plugin, PluginKey, TextSelection as PmTextSelection } from '@tiptap/pm/state'
 import { Decoration, DecorationSet } from '@tiptap/pm/view'
-import { BookOpen, Check, ChevronDown, ChevronUp, MessageSquareQuote, Palette, Rows3, Save, Search, Settings, X } from 'lucide-react'
+import { BookOpen, Check, ChevronDown, ChevronUp, MessageSquareQuote, Palette, Rows3, Save, Search, Settings, Type, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useTranslation } from 'react-i18next'
 
@@ -45,6 +45,7 @@ type SaveStatus = 'dirty' | 'auto-saving' | 'auto-saved' | 'manual-saving' | 'ma
 type PendingSave = { text: string; mode: 'manual' | 'auto' }
 
 interface EditorSettings {
+  fontSize: number
   lineHeight: number
   theme: EditorTheme
 }
@@ -62,9 +63,12 @@ interface SearchMatch {
 const searchPluginKey = new PluginKey<DecorationSet>('punkdom-search-highlight')
 
 const DEFAULT_SETTINGS: EditorSettings = {
+  fontSize: 18,
   lineHeight: 1.9,
   theme: 'ide',
 }
+const MIN_CONTENT_FONT_SIZE = 14
+const MAX_CONTENT_FONT_SIZE = 28
 
 const DEFAULT_AUTO_SAVE_DELAY_MS = 1500
 
@@ -346,6 +350,7 @@ export function MarkdownEditor({
   // 保存编辑器设置
   useEffect(() => {
     localStorage.setItem('punkdom.editor.settings', JSON.stringify(settings))
+    document.documentElement.style.setProperty('--punkdom-content-font-size', `${settings.fontSize}px`)
   }, [settings])
 
   useEffect(() => {
@@ -639,6 +644,7 @@ export function MarkdownEditor({
           background: themeStyle.background,
           ['--punkdom-editor-color' as string]: themeStyle.color,
           ['--punkdom-editor-accent' as string]: themeStyle.accent,
+          ['--punkdom-editor-font-size' as string]: `var(--punkdom-content-font-size, ${settings.fontSize}px)`,
           ['--punkdom-editor-line-height' as string]: String(settings.lineHeight),
         }}
       >
@@ -746,6 +752,26 @@ function EditorSettingsPanel({
         <label className="punkdom-editor-control block rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-3">
           <div className="mb-2 flex items-center justify-between gap-3 text-xs">
             <span className="flex items-center gap-2 font-medium text-[var(--punkdom-text-muted)]">
+              <Type className="h-3.5 w-3.5 text-[var(--punkdom-text-faint)]" />
+              {t('editor.fontSize')}
+            </span>
+            <span className="rounded border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-2 py-0.5 font-mono text-[11px] text-[var(--punkdom-text)]">{settings.fontSize}px</span>
+          </div>
+          <input
+            aria-label={t('editor.fontSize')}
+            type="range"
+            min={MIN_CONTENT_FONT_SIZE}
+            max={MAX_CONTENT_FONT_SIZE}
+            step="1"
+            value={settings.fontSize}
+            onChange={(e) => patch({ fontSize: normalizeFontSize(e.target.value) })}
+            className="punkdom-editor-range w-full"
+          />
+        </label>
+
+        <label className="punkdom-editor-control block rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-3">
+          <div className="mb-2 flex items-center justify-between gap-3 text-xs">
+            <span className="flex items-center gap-2 font-medium text-[var(--punkdom-text-muted)]">
               <Rows3 className="h-3.5 w-3.5 text-[var(--punkdom-text-faint)]" />
               {t('editor.lineHeight')}
             </span>
@@ -810,12 +836,19 @@ function loadEditorSettings(): EditorSettings {
     if (!raw) return DEFAULT_SETTINGS
     const parsed = JSON.parse(raw) as Partial<EditorSettings>
     return {
+      fontSize: normalizeFontSize(parsed.fontSize),
       lineHeight: parsed.lineHeight ?? DEFAULT_SETTINGS.lineHeight,
       theme: parsed.theme && parsed.theme in THEME_STYLES ? parsed.theme : DEFAULT_SETTINGS.theme,
     }
   } catch {
     return DEFAULT_SETTINGS
   }
+}
+
+function normalizeFontSize(value: unknown) {
+  const numberValue = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numberValue)) return DEFAULT_SETTINGS.fontSize
+  return Math.min(MAX_CONTENT_FONT_SIZE, Math.max(MIN_CONTENT_FONT_SIZE, Math.round(numberValue)))
 }
 
 function normalizeEditorText(text: string): string {

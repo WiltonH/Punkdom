@@ -1,9 +1,10 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import { TooltipProvider } from './components/ui/tooltip'
+import i18next from './i18n'
 import { useWorkspaceStore } from './stores/workspace-store'
 
 const defaultContinueWritingPrompt = '续写下一章。请先读取 CREATOR.md、长期大纲、章节组细纲、progress.md、角色状态、资料库和最近章节，判断下一章所属分卷、章节标题和目标路径；再按现有故事节奏创作正文。'
@@ -118,7 +119,8 @@ function renderAppWithQueryClient() {
 }
 
 describe('App', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await i18next.changeLanguage('zh-CN')
     window.localStorage.clear()
     useWorkspaceStore.setState({ mode: 'ide', rightPanel: 'ai', commandOpen: false })
     mockApiFetch()
@@ -179,6 +181,30 @@ describe('App', () => {
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toBeInTheDocument()
   })
 
+  it('shows the effective active model in the status bar', async () => {
+    const settingsSnapshot = defaultPayloads['/api/settings'] as Record<string, unknown>
+    mockApiFetch({
+      '/api/settings': {
+        ...settingsSnapshot,
+        effective: {
+          max_open_tabs: 5,
+          openai_model: 'deepseek-chat',
+          agent_models: { ide: { profile_id: 'claude' } },
+          model_profiles: [{ id: 'claude', name: 'Claude', openai_model: 'claude-3-7-sonnet' }],
+        },
+      },
+    })
+
+    render(
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>,
+    )
+
+    expect(await screen.findByText('空闲 · claude-3-7-sonnet · Powered by Memepop')).toBeInTheDocument()
+    expect(screen.queryByText('空闲 · DeepSeek · Powered by Memepop')).not.toBeInTheDocument()
+  })
+
   it('opens writing Review inside the Writing Agent panel without switching to Automations', async () => {
     const user = userEvent.setup()
     mockApiFetch({
@@ -216,7 +242,7 @@ describe('App', () => {
 
     expect(screen.getAllByText('自动 Review').length).toBeGreaterThan(0)
     expect(screen.getByText('第 1-5 章需要 Review')).toBeInTheDocument()
-    expectOnlyActivePrimaryMenu('写作')
+    expectOnlyActivePrimaryMenu('工作台')
   })
 
   it('applies the persisted primary menu order', async () => {
@@ -234,14 +260,50 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    expect(primaryMenuLabels().slice(0, 4)).toEqual(['书籍管理', 'Agents', '写作', '资料库'])
+    expect(primaryMenuLabels().slice(0, 4)).toEqual(['书籍管理', '智能体', '工作台', '设定集'])
     expect(primaryMenuLabels()).not.toContain('创作者')
 
     const header = screen.getByText('Punkdom').closest('header')
     expect(header).not.toBeNull()
     await user.click(within(header as HTMLElement).getByRole('button', { name: '互动模式' }))
-    expect(primaryMenuLabels().slice(0, 4)).toEqual(['自动化', '剧情', '剧情路线图', '资料库'])
+    expect(primaryMenuLabels().slice(0, 4)).toEqual(['自动化', '剧情', '剧情路线图', '设定集'])
     expect(primaryMenuLabels()).not.toContain('创作者')
+  })
+
+  it('refreshes primary menu labels when interface language changes', async () => {
+    render(
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>,
+    )
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事编排', '版本管理', '书籍管理', '技能点', '智能体', '自动化'])
+
+    await act(async () => {
+      await i18next.changeLanguage('en-US')
+    })
+
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['Workbench', 'Premise', 'Narratives', 'Versions', 'Repository', 'Skills', 'Agents', 'Automation'])
+    expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
+  })
+
+  it('cycles interface language from the top-right toggle', async () => {
+    const user = userEvent.setup()
+    render(
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>,
+    )
+
+    await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事编排', '版本管理', '书籍管理', '技能点', '智能体', '自动化'])
+
+    await user.click(screen.getByRole('button', { name: '切换到英文' }))
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['Workbench', 'Premise', 'Narratives', 'Versions', 'Repository', 'Skills', 'Agents', 'Automation'])
+
+    await user.click(screen.getByRole('button', { name: 'Switch to Chinese' }))
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事编排', '版本管理', '书籍管理', '技能点', '智能体', '自动化'])
   })
 
   it('opens CREATOR.md from the lore workspace page', async () => {
@@ -253,11 +315,11 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    await user.click(screen.getByRole('button', { name: '资料库' }))
+    await user.click(screen.getByRole('button', { name: '设定集' }))
     await user.click(await screen.findByRole('button', { name: 'CREATOR.md' }))
 
     expect(await screen.findByDisplayValue('全书最高规则')).toBeInTheDocument()
-    expectOnlyActivePrimaryMenu('资料库')
+    expectOnlyActivePrimaryMenu('设定集')
   })
 
   it('does not render the removed task panel UI', async () => {
@@ -354,7 +416,7 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
 
     expect(screen.queryByText('全局默认配置')).not.toBeInTheDocument()
     expect(screen.queryByText('默认 Agent')).not.toBeInTheDocument()
@@ -385,9 +447,9 @@ describe('App', () => {
     expect(screen.getAllByText('小说导入时识别章节分割正则').length).toBeGreaterThan(0)
     expect(screen.getByText('这个 Agent 当前是纯模型调用，不修改文件、资料库或叙事编排；这里只配置模型与思考参数。')).toBeInTheDocument()
 
-    const agentsButton = screen.getByRole('button', { name: 'Agents' })
+    const agentsButton = screen.getByRole('button', { name: '智能体' })
     expect(agentsButton).toHaveClass('is-active')
-    expectOnlyActivePrimaryMenu('Agents')
+    expectOnlyActivePrimaryMenu('智能体')
     const settingsButton = screen.getByRole('button', { name: '设置' })
     await user.click(settingsButton)
     expect(await screen.findByRole('button', { name: '关闭设置' })).toBeInTheDocument()
@@ -396,7 +458,7 @@ describe('App', () => {
     expectOnlyActivePrimaryMenu('设置')
 
     await user.click(settingsButton)
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     expect(screen.queryByRole('button', { name: '关闭 Agents' })).not.toBeInTheDocument()
     expect(screen.getByText('模型与思考')).not.toBeVisible()
   })
@@ -413,15 +475,15 @@ describe('App', () => {
     const input = screen.getByPlaceholderText(/输入消息/)
     fireEvent.change(input, { target: { value: 'draft should stay' } })
     expect(input).toHaveValue('draft should stay')
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
 
     expect(await screen.findByRole('button', { name: '关闭 Agents' })).toBeInTheDocument()
     expect(input).not.toBeVisible()
 
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     const restoredInput = screen.getByDisplayValue('draft should stay')
     expect(restoredInput).toBeVisible()
-    expectOnlyActivePrimaryMenu('写作')
+    expectOnlyActivePrimaryMenu('工作台')
   })
 
   it('keeps primary menu clicks available after saving settings', async () => {
@@ -447,10 +509,10 @@ describe('App', () => {
     await user.click(screen.getByRole('button', { name: '保存' }))
     await waitFor(() => expect(fetchCallPaths()).toContain('/api/settings/user'))
 
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     expect(await screen.findByRole('button', { name: '关闭 Agents' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '关闭设置' })).not.toBeInTheDocument()
-    expectOnlyActivePrimaryMenu('Agents')
+    expectOnlyActivePrimaryMenu('智能体')
   })
 
   it('opens shared Agents page without leaving interactive shell', async () => {
@@ -465,16 +527,16 @@ describe('App', () => {
     const header = screen.getByText('Punkdom').closest('header')
     expect(header).not.toBeNull()
     await user.click(within(header as HTMLElement).getByRole('button', { name: '互动模式' }))
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
 
     expect(await screen.findByRole('button', { name: '关闭 Agents' })).toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
-    expectOnlyActivePrimaryMenu('Agents')
+    expectOnlyActivePrimaryMenu('智能体')
     expect(screen.getByRole('button', { name: '剧情' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '剧情路线图' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '写作' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     expect(screen.queryByRole('button', { name: '关闭 Agents' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: '剧情' })).toHaveClass('is-active')
     expectOnlyActivePrimaryMenu('剧情')
@@ -530,7 +592,7 @@ describe('App', () => {
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
     expectOnlyActivePrimaryMenu('版本管理')
     expect(screen.getByRole('button', { name: '剧情' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '写作' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: '剧情' }))
     expect(screen.queryByRole('button', { name: '关闭版本管理' })).not.toBeInTheDocument()
@@ -551,11 +613,11 @@ describe('App', () => {
     expect(await screen.findByRole('button', { name: '关闭版本管理' })).toBeInTheDocument()
     expectOnlyActivePrimaryMenu('版本管理')
 
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     expect(await screen.findByRole('button', { name: '关闭 Agents' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '关闭版本管理' })).not.toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
-    expectOnlyActivePrimaryMenu('Agents')
+    expectOnlyActivePrimaryMenu('智能体')
 
     await user.click(screen.getByRole('button', { name: '版本管理' }))
     expect(await screen.findByRole('button', { name: '关闭版本管理' })).toBeInTheDocument()
@@ -563,8 +625,8 @@ describe('App', () => {
 
     await user.click(within(header as HTMLElement).getByRole('button', { name: '写作模式' }))
     expect(screen.queryByRole('button', { name: '关闭版本管理' })).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '写作' })).toHaveClass('is-active')
-    expectOnlyActivePrimaryMenu('写作')
+    expect(screen.getByRole('button', { name: '工作台' })).toHaveClass('is-active')
+    expectOnlyActivePrimaryMenu('工作台')
 
     await user.click(within(header as HTMLElement).getByRole('button', { name: '互动模式' }))
     await user.click(screen.getByRole('button', { name: '版本管理' }))
@@ -611,16 +673,16 @@ describe('App', () => {
     expect(header).not.toBeNull()
     await user.click(within(header as HTMLElement).getByRole('button', { name: '互动模式' }))
 
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     expect(await screen.findByRole('button', { name: '关闭 Agents' })).toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
-    expectOnlyActivePrimaryMenu('Agents')
+    expectOnlyActivePrimaryMenu('智能体')
 
     await user.click(screen.getByRole('button', { name: '书籍管理' }))
     expect(await screen.findByRole('button', { name: '关闭书籍管理' })).toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
     expect(screen.getByRole('button', { name: '剧情' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '写作' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
     expectOnlyActivePrimaryMenu('书籍管理')
 
     await user.click(screen.getByRole('button', { name: '设置' }))
@@ -633,18 +695,17 @@ describe('App', () => {
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
     expectOnlyActivePrimaryMenu('自动化')
 
-    await user.click(screen.getByRole('button', { name: 'Agents' }))
+    await user.click(screen.getByRole('button', { name: '智能体' }))
     expect(await screen.findByRole('button', { name: '关闭 Agents' })).toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
     expect(screen.getByRole('button', { name: '剧情' })).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '写作' })).not.toBeInTheDocument()
-    expectOnlyActivePrimaryMenu('Agents')
+    expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
+    expectOnlyActivePrimaryMenu('智能体')
   }, 10000)
 })
 
 function expectOnlyActivePrimaryMenu(label: string) {
-  const agentsButton = screen.getByRole('button', { name: 'Agents' })
-  const activityBar = agentsButton.closest('aside')
+  const activityBar = findActivityBar()
   if (!activityBar) throw new Error('activity bar not found')
   const activeLabels = within(activityBar)
     .getAllByRole('button')
@@ -654,12 +715,15 @@ function expectOnlyActivePrimaryMenu(label: string) {
 }
 
 function primaryMenuLabels() {
-  const agentsButton = screen.getByRole('button', { name: 'Agents' })
-  const activityBar = agentsButton.closest('aside')
+  const activityBar = findActivityBar()
   if (!activityBar) throw new Error('activity bar not found')
   return within(activityBar)
     .getAllByRole('button')
     .map((button) => button.getAttribute('aria-label') || button.textContent || '')
+}
+
+function findActivityBar() {
+  return document.querySelector('aside.punkdom-activity-bar') as HTMLElement | null
 }
 
 function mockApiFetch(overrides: Record<string, unknown> = {}) {

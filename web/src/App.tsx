@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from 'next-themes'
 import { fetchSettings, updateUserSettings } from '@/features/settings/api'
 import { applyFontSettings, fontSettingsFromEffective } from '@/features/settings/font-variables'
+import type { AgentModelOverride, Settings } from '@/features/settings/types'
 import { getLoreItems, importCharacterCard, previewCharacterCard, type CharacterCardPreview, type LoreItem, type WorkspaceSearchResult } from '@/lib/api'
 import { CommandPalette } from '@/components/common/command-palette'
 import { useWorkspace } from '@/hooks/useWorkspace'
@@ -59,6 +60,7 @@ function App() {
   const [editorAutoSaveDelayMs, setEditorAutoSaveDelayMs] = useState(AUTO_SAVE_DELAY_FALLBACK_MS)
   const [motionIntensity, setMotionIntensity] = useState('system')
   const [punkdomDir, setPunkdomDir] = useState('')
+  const [effectiveSettings, setEffectiveSettings] = useState<Settings | null>(null)
   const [sidebarView, setSidebarView] = useState<SidebarView>('outline')
   const [editorSearchIntent, setEditorSearchIntent] = useState<{ path: string; query: string; line: number; nonce: number } | null>(null)
   const [characterCardDialogOpen, setCharacterCardDialogOpen] = useState(false)
@@ -188,6 +190,7 @@ function App() {
         .then((data) => {
           if (cancelled) return
           const effective = data?.effective
+          setEffectiveSettings(effective ?? null)
           const v = effective?.max_open_tabs
           if (typeof v === 'number' && v >= 1) setMaxOpenTabs(Math.floor(v))
           setEditorAutoSaveEnabled(effective?.auto_save_enabled ?? AUTO_SAVE_ENABLED_FALLBACK)
@@ -198,7 +201,10 @@ function App() {
           setMotionIntensity(normalizeMotionIntensity(effective?.motion_intensity))
           applyFontSettings(fontSettingsFromEffective(effective))
         })
-        .catch((e) => console.warn('加载界面配置失败', e))
+        .catch((e) => {
+          console.warn('加载界面配置失败', e)
+          setEffectiveSettings(null)
+        })
     }
     reload()
     const onUpdated = () => reload()
@@ -513,6 +519,7 @@ function App() {
   }, [setMode])
 
   const appTheme = normalizeVisibleAppTheme(theme || resolvedTheme)
+  const statusModelName = resolveStatusModelName(effectiveSettings, mode, booksReturnMode) || t('workbench.status.defaultModel')
   const handleCycleAppTheme = useCallback(() => {
     const currentIndex = APP_THEME_SEQUENCE.indexOf(appTheme)
     const nextTheme = APP_THEME_SEQUENCE[(currentIndex + 1) % APP_THEME_SEQUENCE.length]
@@ -546,6 +553,7 @@ function App() {
         currentBookName={currentBookName}
         workspace={workspace}
         appVersion={APP_VERSION}
+        statusModelName={statusModelName}
         summary={summary}
         currentChapter={currentChapter}
         chapterStats={chapterStats}
@@ -690,6 +698,30 @@ function normalizeAppTheme(theme?: string) {
 function normalizeVisibleAppTheme(theme?: string | null): AppTheme {
   if (theme === 'light' || theme === 'paper' || theme === 'dark') return theme
   return 'dark'
+}
+
+function resolveStatusModelName(settings: Settings | null, mode: WorkspaceMode, booksReturnMode: BooksReturnMode): string {
+  const fallback = settings?.openai_model?.trim() || ''
+  if (!settings) return fallback
+  const agentKind = statusAgentKindForMode(mode, booksReturnMode)
+  const override = mergeAgentModelOverride(settings.agent_models?.default, settings.agent_models?.[agentKind])
+  const profileID = override.profile_id?.trim() || 'default'
+  if (profileID === 'default') return fallback
+  const profile = settings.model_profiles?.find((item) => item.id?.trim() === profileID)
+  return profile?.openai_model?.trim() || profile?.name?.trim() || fallback
+}
+
+function statusAgentKindForMode(mode: WorkspaceMode, booksReturnMode: BooksReturnMode): 'ide' | 'interactive_story' {
+  if (mode === 'interactive') return 'interactive_story'
+  if (mode === 'ide') return 'ide'
+  return booksReturnMode === 'interactive' ? 'interactive_story' : 'ide'
+}
+
+function mergeAgentModelOverride(parent?: AgentModelOverride, child?: AgentModelOverride): AgentModelOverride {
+  return {
+    ...(parent ?? {}),
+    ...(child ?? {}),
+  }
 }
 
 export default App

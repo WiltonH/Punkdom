@@ -45,7 +45,7 @@ export const MessageItem = memo(function MessageItem({ message, highlightDialogu
               )}
             </div>
           )}
-          <div className="punkdom-user-message max-w-[88%] rounded-lg px-3.5 py-2.5 text-sm text-[var(--punkdom-user-message-text)] whitespace-pre-wrap" style={messageStyle}>
+          <div className="punkdom-user-message max-w-[88%] rounded-lg px-3.5 py-2.5 text-[var(--punkdom-user-message-text)] whitespace-pre-wrap" style={messageStyle}>
             {content}
           </div>
         </div>
@@ -54,7 +54,7 @@ export const MessageItem = memo(function MessageItem({ message, highlightDialogu
     case 'assistant':
       return (
         <div className="group flex justify-start">
-          <div className="chat-agent-message w-full px-1 text-sm text-[var(--punkdom-text)]" style={messageStyle}>
+          <div className="chat-agent-message w-full px-1 text-[var(--punkdom-text)]" style={messageStyle}>
             {message.streaming ? (
               <StreamingMarkdown content={content} highlightDialogue={highlightDialogue} />
             ) : (

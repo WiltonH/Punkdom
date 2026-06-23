@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { BookOpen, Bot, Clock3, Database, FileText, History, MessageSquareText, Moon, NotebookText, PanelLeft, PenLine, Settings, SlidersHorizontal, Sparkles, Sun } from 'lucide-react'
+import { BookOpen, Bot, Clock3, Database, FileText, History, MessageSquareText, Moon, NotebookText, PanelLeft, PenLine, Settings, SlidersHorizontal, Sparkles, Sun, Swords } from 'lucide-react'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { WorkspaceLayout } from '@/components/layout/workspace-layout'
 import { WorkspaceMobileLayout, type MobileNavItem } from '@/components/layout/workspace-mobile-layout'
@@ -12,6 +12,7 @@ import { TooltipIconButton } from '@/components/common/tooltip-icon-button'
 import { punkdomSpring } from '@/features/motion/motion-tokens'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { getAutomationInbox, type ChapterSummary, type WorkspaceSummary } from '@/lib/api'
+import { setConfiguredLocale } from '@/i18n'
 import type { RightPanel, WorkspaceMode } from '@/stores/workspace-store'
 import type { InteractiveSubmode } from '@/features/interactive/types'
 import { formatNumber } from './workbench-utils'
@@ -22,6 +23,7 @@ interface WorkbenchShellProps {
   currentBookName: string
   workspace: string
   appVersion: string
+  statusModelName: string
   summary: WorkspaceSummary | null
   currentChapter?: ChapterSummary
   isStreaming: boolean
@@ -74,6 +76,7 @@ export function WorkbenchShell({
   currentBookName,
   workspace,
   appVersion,
+  statusModelName,
   summary,
   currentChapter,
   isStreaming,
@@ -94,7 +97,7 @@ export function WorkbenchShell({
   onToggleSettings,
   onCloseSettings,
 }: WorkbenchShellProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
   const [activityOrders, setActivityOrders] = useState<Record<ActivityOrderScope, ActivityItemId[]>>(readStoredActivityOrders)
   const [automationInboxUnread, setAutomationInboxUnread] = useState(0)
@@ -143,6 +146,9 @@ export function WorkbenchShell({
     current: t(themeLabelKey(appTheme)),
     next: t(themeLabelKey(nextAppTheme(appTheme))),
   })
+  const localeIsChinese = i18n.language.startsWith('zh')
+  const nextLocale = localeIsChinese ? 'en-US' : 'zh-CN'
+  const localeButtonLabel = t(localeIsChinese ? 'workbench.language.switchToEnglish' : 'workbench.language.switchToChinese')
   const ThemeIcon = themeIconFor(appTheme)
 
   const closeSettingsIfOpen = () => {
@@ -337,7 +343,7 @@ export function WorkbenchShell({
       ...(navigationMode === 'interactive' ? interactiveActivityItems : ideActivityItems),
       ...sharedActivityItems,
     ], activityOrder, defaultActivityOrderForScope(activityOrderScope)),
-    [activityOrder, activityOrderScope, agentsActive, automationInboxUnread, automationsActive, booksReturnMode, ideModeActive, interactiveModeActive, interactiveSubmode, loreVisible, mode, navigationMode, settingsOpen, skillsActive, tellerVisible, versionsVisible],
+    [activityOrder, activityOrderScope, agentsActive, automationInboxUnread, automationsActive, booksReturnMode, i18n.language, ideModeActive, interactiveModeActive, interactiveSubmode, loreVisible, mode, navigationMode, settingsOpen, skillsActive, tellerVisible, versionsVisible],
   )
 
   const handleActivityDragEnd = (event: DragEndEvent) => {
@@ -360,7 +366,7 @@ export function WorkbenchShell({
   const topBar = (
     <header className="punkdom-topbar grid h-10 shrink-0 grid-cols-[auto_1fr_auto] items-center border-b px-3 text-xs">
       <div className="flex items-center gap-3">
-        <div className="font-semibold text-[var(--punkdom-text)]">Punkdom</div>
+        <PunkdomBrand />
         <LayoutGroup id="workbench-mode-switch">
         <div className="flex h-7 items-center rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-0.5" aria-label={t('workbench.modeSwitch')}>
           <button
@@ -386,7 +392,7 @@ export function WorkbenchShell({
         <BookOpen className="h-3.5 w-3.5 shrink-0 text-[var(--punkdom-text-muted)]" />
         <span className="truncate font-medium text-[var(--punkdom-text)]">{currentBookName}</span>
       </div>
-      <div className="punkdom-ui-compact flex items-center justify-end gap-2 text-[var(--punkdom-text-faint)]">
+      <div className="punkdom-ui-compact flex items-center justify-end gap-1 text-[var(--punkdom-text-faint)]">
         <TooltipIconButton
           label={themeButtonLabel}
           aria-label={themeButtonLabel}
@@ -395,6 +401,15 @@ export function WorkbenchShell({
           className="punkdom-icon-button h-7 w-7"
         >
           <ThemeIcon className="h-4 w-4" />
+        </TooltipIconButton>
+        <TooltipIconButton
+          label={localeButtonLabel}
+          aria-label={localeButtonLabel}
+          title={localeButtonLabel}
+          onClick={() => setConfiguredLocale(nextLocale)}
+          className="punkdom-icon-button h-7 w-7 px-0"
+        >
+          <span className="text-[10px] font-medium leading-none">{localeIsChinese ? 'EN' : '中'}</span>
         </TooltipIconButton>
       </div>
     </header>
@@ -454,15 +469,17 @@ export function WorkbenchShell({
       {mode === 'ide' && currentChapter && (
         <span className="ml-4">{t('workbench.status.currentChapter', { title: currentChapter.display_title, words: formatNumber(currentChapter.words), status: currentChapter.status })}</span>
       )}
-      <span className="ml-auto">{isStreaming ? t('workbench.status.streaming') : t('workbench.status.idle')} · DeepSeek</span>
+      <span className="ml-auto">
+        {t('workbench.status.runtime', { status: isStreaming ? t('workbench.status.streaming') : t('workbench.status.idle'), model: statusModelName })}
+      </span>
     </div>
   )
 
   if (isMobile) {
     const mobileTopBar = (
       <header className="punkdom-mobile-topbar punkdom-topbar shrink-0 border-b border-[var(--punkdom-border)] px-3 py-2">
-        <div className="flex min-w-0 items-center justify-between gap-2">
-          <div className="shrink-0 font-semibold text-[var(--punkdom-text)]">Punkdom</div>
+        <div className="flex min-w-0 items-center gap-1">
+          <PunkdomBrand />
           <LayoutGroup id="workbench-mobile-mode-switch">
             <div className="flex h-8 shrink-0 items-center rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-0.5" aria-label={t('workbench.modeSwitch')}>
               <button
@@ -483,15 +500,26 @@ export function WorkbenchShell({
               </button>
             </div>
           </LayoutGroup>
-          <TooltipIconButton
-            label={themeButtonLabel}
-            aria-label={themeButtonLabel}
-            title={themeButtonLabel}
-            onClick={onCycleAppTheme}
-            className="punkdom-icon-button h-8 w-8 shrink-0"
-          >
-            <ThemeIcon className="h-4 w-4" />
-          </TooltipIconButton>
+          <div className="ml-auto flex shrink-0 items-center justify-end gap-1">
+            <TooltipIconButton
+              label={themeButtonLabel}
+              aria-label={themeButtonLabel}
+              title={themeButtonLabel}
+              onClick={onCycleAppTheme}
+              className="punkdom-icon-button h-8 w-8 shrink-0"
+            >
+              <ThemeIcon className="h-4 w-4" />
+            </TooltipIconButton>
+            <TooltipIconButton
+              label={localeButtonLabel}
+              aria-label={localeButtonLabel}
+              title={localeButtonLabel}
+              onClick={() => setConfiguredLocale(nextLocale)}
+              className="punkdom-icon-button h-8 w-8 shrink-0 px-0"
+            >
+              <span className="text-[10px] font-medium leading-none">{localeIsChinese ? 'EN' : '中'}</span>
+            </TooltipIconButton>
+          </div>
         </div>
         <div className="mt-1 flex min-w-0 items-center gap-1.5 text-[11px] text-[var(--punkdom-text-faint)]" title={workspace || currentBookName}>
           <BookOpen className="h-3.5 w-3.5 shrink-0 text-[var(--punkdom-text-muted)]" />
@@ -556,6 +584,15 @@ export function WorkbenchShell({
       rightPanelVisible={mode === 'ide' && !fullWorkspacePanelVisible && Boolean(rightPanelContent)}
       statusBar={statusBar}
     />
+  )
+}
+
+function PunkdomBrand() {
+  return (
+    <div className="flex shrink-0 items-center gap-1.5 font-semibold text-[var(--punkdom-text)]" aria-label="Punkdom">
+      <Swords aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--punkdom-text)]" strokeWidth={2} />
+      <span>Punkdom</span>
+    </div>
   )
 }
 

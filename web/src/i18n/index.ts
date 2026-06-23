@@ -13,6 +13,7 @@ export const LOCALE_OPTIONS: Array<{ value: LocaleCode; labelKey: string }> = [
 ]
 
 const CONFIGURED_LOCALE_STORAGE_KEY = 'punkdom.locale.configured'
+const DEFAULT_LOCALE: LocaleCode = 'zh-CN'
 
 let configuredLocale: LocaleCode = readStoredConfiguredLocale()
 let fetchHeadersInstalled = false
@@ -25,6 +26,7 @@ export function resolveLocale(locale: string | undefined | null, browserLanguage
 }
 
 export function setConfiguredLocale(locale: string | undefined | null) {
+  if (locale == null || locale === '') return
   configuredLocale = normalizeLocaleCode(locale)
   writeStoredConfiguredLocale(configuredLocale)
   const resolved = resolveLocale(configuredLocale)
@@ -86,12 +88,13 @@ function normalizeLocaleCode(locale: string | undefined | null): LocaleCode {
 }
 
 function readStoredConfiguredLocale(): LocaleCode {
-  if (typeof window === 'undefined') return 'auto'
+  if (typeof window === 'undefined') return DEFAULT_LOCALE
   try {
-    return normalizeLocaleCode(window.localStorage.getItem(CONFIGURED_LOCALE_STORAGE_KEY))
+    const stored = window.localStorage.getItem(CONFIGURED_LOCALE_STORAGE_KEY)
+    return stored == null ? DEFAULT_LOCALE : normalizeLocaleCode(stored)
   } catch (error) {
     console.warn('[i18n] 读取本地语言配置失败', error)
-    return 'auto'
+    return DEFAULT_LOCALE
   }
 }
 

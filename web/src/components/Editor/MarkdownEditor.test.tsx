@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MarkdownEditor } from './MarkdownEditor'
@@ -73,9 +73,11 @@ describe('MarkdownEditor', () => {
   afterEach(() => {
     vi.clearAllTimers()
     vi.useRealTimers()
+    window.localStorage.clear()
+    document.documentElement.removeAttribute('style')
   })
 
-  it('打开编辑器设置 Popover 后展示行间距和背景主题', async () => {
+  it('打开编辑器设置 Popover 后展示字体大小、行间距和背景主题', async () => {
     const user = userEvent.setup()
 
     render(
@@ -89,8 +91,29 @@ describe('MarkdownEditor', () => {
     await user.click(screen.getByRole('button', { name: '编辑器设置' }))
 
     expect(screen.getByText('编辑器设置')).toBeInTheDocument()
+    expect(screen.getByText('字体大小')).toBeInTheDocument()
     expect(screen.getByText('行间距')).toBeInTheDocument()
     expect(screen.getByText('背景主题')).toBeInTheDocument()
+  })
+
+  it('调整字体大小时只更新内容字号变量，不改变 UI 字号变量', async () => {
+    const user = userEvent.setup()
+    document.documentElement.style.setProperty('--punkdom-ui-font-size', '14px')
+
+    render(
+      <MarkdownEditor
+        fileName="chapters/ch01.md"
+        content="第一章"
+        onSave={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: '编辑器设置' }))
+    fireEvent.change(screen.getByRole('slider', { name: '字体大小' }), { target: { value: '23' } })
+
+    expect(document.documentElement.style.getPropertyValue('--punkdom-content-font-size')).toBe('23px')
+    expect(document.documentElement.style.getPropertyValue('--punkdom-ui-font-size')).toBe('14px')
+    expect(window.localStorage.getItem('punkdom.editor.settings')).toContain('"fontSize":23')
   })
 
   it('自动保存进行中继续编辑时串行保存最新内容，避免旧请求晚返回覆盖新内容', async () => {

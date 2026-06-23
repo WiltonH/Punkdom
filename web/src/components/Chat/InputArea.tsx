@@ -361,7 +361,7 @@ export function InputArea({
   }
 
   return (
-    <div className="punkdom-chat-input-area relative border-t border-[var(--punkdom-border)] p-3">
+    <div className="punkdom-chat-input-area relative box-border w-full shrink-0 border-t border-[var(--punkdom-border)] px-[var(--punkdom-chat-gutter)] py-3">
       <ReferenceChips files={referencedFiles} onRemove={onReferenceRemove} />
       <ReferenceChips
         files={loreReferences.map((id) => loreReferenceLabels[id] || id)}
@@ -487,7 +487,7 @@ export function InputArea({
         heading={t('chat.styleReference.heading')}
       />
 
-      <div className="punkdom-chat-composer flex items-end gap-2 rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-1.5">
+      <div className="punkdom-chat-composer box-border flex w-full items-end gap-2 rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-1.5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

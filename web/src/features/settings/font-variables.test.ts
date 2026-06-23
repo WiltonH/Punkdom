@@ -18,7 +18,19 @@ describe('font variables', () => {
     expect(style.getPropertyValue('--punkdom-ui-font-size')).toBe('13px')
     expect(style.getPropertyValue('--punkdom-ui-sm-font-size')).toBe('15px')
     expect(style.getPropertyValue('--punkdom-reading-font-size')).toBe('21px')
+    expect(style.getPropertyValue('--punkdom-content-font-size')).toBe('21px')
     expect(style.getPropertyValue('--punkdom-reading-font-family')).toContain('LXGW WenKai')
+  })
+
+  it('does not overwrite a local content font size override', () => {
+    document.documentElement.style.setProperty('--punkdom-content-font-size', '24px')
+
+    applyFontSettings(fontSettingsFromEffective({
+      reading_font_size: 18,
+    }))
+
+    expect(document.documentElement.style.getPropertyValue('--punkdom-reading-font-size')).toBe('18px')
+    expect(document.documentElement.style.getPropertyValue('--punkdom-content-font-size')).toBe('24px')
   })
 
   it('clamps out-of-range sizes before writing variables', () => {

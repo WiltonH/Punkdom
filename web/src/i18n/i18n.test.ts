@@ -46,6 +46,28 @@ describe('i18n', () => {
     expect(document.documentElement.lang).toBe('zh-CN')
   })
 
+  it('defaults to Chinese when no locale is configured', async () => {
+    vi.resetModules()
+    setBrowserLanguage('en-US')
+
+    const { default: i18next, getConfiguredLocale, getResolvedLocale } = await import('./index')
+
+    expect(getConfiguredLocale()).toBe('zh-CN')
+    expect(getResolvedLocale()).toBe('zh-CN')
+    expect(i18next.language).toBe('zh-CN')
+  })
+
+  it('keeps the current locale when settings do not provide one', async () => {
+    vi.resetModules()
+    const { setConfiguredLocale, getConfiguredLocale } = await import('./index')
+
+    setConfiguredLocale('en-US')
+    setConfiguredLocale(undefined)
+
+    expect(getConfiguredLocale()).toBe('en-US')
+    expect(window.localStorage.getItem('punkdom.locale.configured')).toBe('en-US')
+  })
+
   it('persists the configured locale after settings are loaded', async () => {
     vi.resetModules()
     const { setConfiguredLocale } = await import('./index')

@@ -34,6 +34,7 @@
   --punkdom-user-message-text: #ffffff;
   --punkdom-assistant-message-border: #303030;
   --punkdom-assistant-message-bg: #141414;
+  --punkdom-chat-gutter: 24px;
   --punkdom-chat-heading: #d7dbe2;
   --punkdom-menu-bg: rgba(32, 33, 36, 0.95);
   --punkdom-menu-item-hover-bg: rgba(74, 77, 84, 0.25);
@@ -78,6 +79,7 @@
   --punkdom-ui-micro-font-size: 12px;
   --punkdom-ui-micro-line-height: 16px;
   --punkdom-reading-font-size: 18px;
+  --punkdom-content-font-size: var(--punkdom-reading-font-size);
   --punkdom-ui-font-family: "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", -apple-system, BlinkMacSystemFont, sans-serif;
   --punkdom-reading-font-family: "Source Han Serif SC", "Noto Serif CJK SC", "Songti SC", "STSong", "SimSun", serif;
   color-scheme: dark;
@@ -381,6 +383,10 @@ html[data-punkdom-motion="off"] *::after {
 }
 
 @media (max-width: 767px) {
+  :root {
+    --punkdom-chat-gutter: 16px;
+  }
+
   html,
   body,
   #root {
@@ -829,7 +835,12 @@ html[data-punkdom-motion="off"] *::after {
 
 /* AI 对话区 Markdown 输出样式 */
 .chat-agent-message {
-  font-size: var(--punkdom-ui-sm-font-size);
+  font-size: 15px;
+  line-height: 1.72;
+}
+
+.punkdom-user-message {
+  font-size: 15px;
   line-height: 1.72;
 }
 

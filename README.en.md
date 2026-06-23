@@ -2,7 +2,17 @@
 
 Punkdom v0.1 is a local-first AI creative workspace for novels, interactive storytelling, and long-form creative projects.
 
-v0.1 includes Writing Mode, Interactive Mode, structured lore, creative Agents, Skills, automations, version management, novel import, character-card import, settings, and local workspace management.
+v0.1 includes Writing Mode, Interactive Mode, premise management, creative Agents, Skills, agent configuration, automations, version management, novel import, character-card import, settings, and local workspace management.
+
+## v0.1.2 Update
+
+- Added a lightweight `Swords` mark beside the Punkdom wordmark in the main shell.
+- Renamed primary navigation for the product shell: Workbench, Premise, Narratives, Versions, Repository, Skills, Agents, Automation, Fold, and Settings.
+- Fixed stale primary navigation labels after interface language changes; added a top-right `EN/中` language toggle that defaults to Chinese and cycles between Chinese and English.
+- Added a body font-size slider in editor settings for chapter reading/editing text only, without changing UI font size.
+- Set AI conversation message text to 15px and improved horizontal alignment between the chat canvas and composer.
+- Updated the status bar to show the currently effective model and `Powered by Memepop`; the model label follows active model configuration changes.
+- Polished Paper Mode top controls, mobile theme/language buttons, and AI conversation visual consistency.
 
 ## v0.1.1 Update
 

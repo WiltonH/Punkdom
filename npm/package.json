@@ -1,6 +1,6 @@
 {
   "name": "@punkdom/punkdom",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Punkdom v0.1 AI creative workspace",
   "type": "module",
   "bin": {

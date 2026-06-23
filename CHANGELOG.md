@@ -1,5 +1,17 @@
 # Changelog
 
+## [v0.1.2] - 2026-06-23
+
+- Added a `Swords` Lucide mark beside the Punkdom wordmark in the workbench top bar.
+- Renamed the primary sidebar entries and fixed language switching so cached menu labels refresh immediately.
+- Added a top-right language toggle that defaults to Chinese and cycles between Chinese and English.
+- Added a content font-size slider to editor settings for the chapter body without changing UI or AI conversation font size.
+- Aligned the AI composer with the conversation content area.
+- Set AI conversation message text to 15px.
+- Updated the status bar runtime credit to show `Powered by Memepop`.
+- Made the status bar model label follow the currently effective model configuration instead of a fixed provider name.
+- Unified the AI conversation canvas and composer gutter so the input box stays aligned with chat content.
+
 ## [v0.1.1] - 2026-06-22
 
 - Added Paper theme with Claude-style warm off-white, charcoal, terracotta orange, soft blue, and olive green palette.

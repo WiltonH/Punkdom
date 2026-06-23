@@ -34,4 +34,19 @@ describe('InputArea', () => {
 
     expect(scrollSpy).toHaveBeenCalledWith({ block: 'nearest' })
   })
+
+  it('uses the shared chat gutter and full-width composer for alignment', () => {
+    const { container } = render(
+      <InputArea
+        onSend={vi.fn()}
+        disabled={false}
+      />,
+    )
+
+    const inputArea = container.querySelector('.punkdom-chat-input-area')
+    const composer = container.querySelector('.punkdom-chat-composer')
+
+    expect(inputArea).toHaveClass('box-border', 'w-full', 'px-[var(--punkdom-chat-gutter)]')
+    expect(composer).toHaveClass('box-border', 'w-full')
+  })
 })

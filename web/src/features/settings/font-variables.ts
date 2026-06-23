@@ -35,7 +35,11 @@ export function applyFontSettings(settings: FontSettingsInput) {
   document.documentElement.style.setProperty('--punkdom-ui-compact-line-height', `${compactSize + 5}px`)
   document.documentElement.style.setProperty('--punkdom-ui-micro-font-size', `${microSize}px`)
   document.documentElement.style.setProperty('--punkdom-ui-micro-line-height', `${microSize + 4}px`)
-  document.documentElement.style.setProperty('--punkdom-reading-font-size', `${clampFontSize(settings.readingFontSize, 14, 28, 18)}px`)
+  const readingFontSize = clampFontSize(settings.readingFontSize, 14, 28, 18)
+  document.documentElement.style.setProperty('--punkdom-reading-font-size', `${readingFontSize}px`)
+  if (!document.documentElement.style.getPropertyValue('--punkdom-content-font-size')) {
+    document.documentElement.style.setProperty('--punkdom-content-font-size', `${readingFontSize}px`)
+  }
 }
 
 function clampFontSize(value: unknown, min: number, max: number, fallback: number) {

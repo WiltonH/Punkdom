@@ -34,6 +34,7 @@ interface ModeRouterProps {
   currentBookName: string
   workspace: string
   appVersion: string
+  statusModelName: string
   summary: WorkspaceSummary | null
   currentChapter?: ChapterSummary
   chapterStats: Record<string, ChapterSummary>
@@ -116,6 +117,7 @@ export function ModeRouter(props: ModeRouterProps) {
     currentBookName,
     workspace,
     appVersion,
+    statusModelName,
     summary,
     currentChapter,
     chapterStats,
@@ -557,6 +559,7 @@ export function ModeRouter(props: ModeRouterProps) {
       currentBookName={currentBookName}
       workspace={workspace}
       appVersion={appVersion}
+      statusModelName={statusModelName}
       summary={summary}
       currentChapter={currentChapter}
       isStreaming={isStreaming}

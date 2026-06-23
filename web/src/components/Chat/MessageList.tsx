@@ -205,7 +205,7 @@ export function MessageList({ messages, isStreaming, activityContent, highlightD
       ref={containerRef}
       onScroll={handleContainerScroll}
       onWheel={handleWheel}
-      className={`punkdom-chat-canvas min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 ${bottomPaddingClassName}`}
+      className={`punkdom-chat-canvas box-border min-h-0 w-full flex-1 space-y-4 overflow-y-auto px-[var(--punkdom-chat-gutter)] py-5 ${bottomPaddingClassName}`}
     >
       {messages.length === 0 && !isStreaming && (
         <div className="flex h-full items-center justify-center">

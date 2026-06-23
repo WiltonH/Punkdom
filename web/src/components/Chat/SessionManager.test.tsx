@@ -60,6 +60,18 @@ describe('SessionManager', () => {
 })
 
 describe('MessageList', () => {
+  it('uses the shared chat gutter for alignment with the composer', () => {
+    const { container } = render(
+      <MessageList
+        isStreaming={false}
+        activityContent=""
+        messages={[]}
+      />,
+    )
+
+    expect(container.firstElementChild).toHaveClass('box-border', 'w-full', 'px-[var(--punkdom-chat-gutter)]')
+  })
+
   it('历史消息首次加载后默认滚动到底部', async () => {
     const { container, rerender } = render(
       <MessageList
