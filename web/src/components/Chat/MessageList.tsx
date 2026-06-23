@@ -209,7 +209,7 @@ export function MessageList({ messages, isStreaming, activityContent, highlightD
     >
       {messages.length === 0 && !isStreaming && (
         <div className="flex h-full items-center justify-center">
-          <div className="rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-4 py-3 text-center text-sm text-[var(--punkdom-text-muted)] shadow-[0_14px_34px_rgba(0,0,0,0.22)]">
+          <div className="rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-4 py-3 text-center text-sm text-[var(--punkdom-text-muted)] shadow-none">
             {t('chat.empty')}
           </div>
         </div>

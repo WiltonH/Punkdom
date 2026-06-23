@@ -583,9 +583,7 @@ html[data-punkdom-motion="off"] *::after {
     linear-gradient(180deg, var(--punkdom-user-message-bg-from), var(--punkdom-user-message-bg-to));
   font-size: var(--punkdom-ui-sm-font-size);
   line-height: 1.72;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 10px 26px rgba(0, 0, 0, 0.16);
+  box-shadow: none;
 }
 
 .punkdom-assistant-message {
@@ -594,9 +592,7 @@ html[data-punkdom-motion="off"] *::after {
   background:
     linear-gradient(180deg, var(--punkdom-assistant-message-bg), var(--punkdom-surface) 68%);
   padding: 12px 14px;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.028),
-    0 12px 30px rgba(0, 0, 0, 0.14);
+  box-shadow: none;
 }
 
 .punkdom-editor-toolbar,

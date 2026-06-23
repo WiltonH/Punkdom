@@ -146,7 +146,7 @@ export function ToolActivityBlock({ content }: { content: string }) {
 
   return (
     <div className="flex justify-start">
-      <div className="w-full rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-3 py-2.5 text-xs shadow-[var(--punkdom-shadow)]">
+      <div className="w-full rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-3 py-2.5 text-xs shadow-none">
         <div className="flex items-start gap-3">
           <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] text-[var(--punkdom-text-muted)]">
             <Clock3 className="h-3.5 w-3.5 animate-pulse" />
@@ -187,7 +187,7 @@ export function ToolExecutionBlock({ message }: { message: ChatMessage }) {
 
   return (
     <div className="flex justify-start">
-      <div className="w-full overflow-hidden rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] text-xs shadow-[var(--punkdom-shadow)]">
+      <div className="w-full overflow-hidden rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] text-xs shadow-none">
         <div className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2">
           <ToolStatusIcon status={status} />
           <span className="shrink-0 font-medium text-[var(--punkdom-text)]">{t('chat.tool.calling')}</span>
@@ -243,7 +243,7 @@ export function TodoListBlock({ message }: { message: ChatMessage }) {
 
   return (
     <div className="flex justify-start">
-      <div className="w-full overflow-hidden rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] text-xs shadow-[var(--punkdom-shadow)]">
+      <div className="w-full overflow-hidden rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] text-xs shadow-none">
         <div className="flex min-h-10 min-w-0 items-center gap-2 px-3 py-2">
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] text-[var(--punkdom-text-muted)]">
             <ListTodo className="h-3.5 w-3.5" />
@@ -368,7 +368,7 @@ function ToolResultBlock({ content }: { content: string }) {
 
   return (
     <div className="flex justify-start">
-      <div className="w-full overflow-hidden rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] text-xs shadow-[var(--punkdom-shadow)]">
+      <div className="w-full overflow-hidden rounded-lg border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] text-xs shadow-none">
         <div className="flex items-start gap-3 px-3 py-2.5">
           <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--punkdom-accent-green)]/35 bg-[var(--punkdom-accent-green)]/10 text-[var(--punkdom-accent-green)]">
             <CheckCircle2 className="h-3.5 w-3.5" />

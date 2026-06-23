@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Changed the Punkdom wordmark icon from `Swords` to the Lucide `Stone` icon.
+- Flattened chat message bubbles and tool cards by removing their drop shadows.
 
 ## [v0.1.2] - 2026-06-23
 
