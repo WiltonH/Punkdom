@@ -15,6 +15,7 @@
 - Aligned narrative injection rule switches with a fixed right column and centered switch thumb geometry.
 - Renamed Project Repository labels from book/bookshelf language to project/text language in Chinese and English.
 - Added Docker image publishing to GHCR, Docker Compose deployment assets, and Docker-specific update guidance that uses image refreshes instead of in-container binary replacement.
+- Fixed Docker build context exclusions so Dockerfile and deployment templates remain available for GHCR release builds.
 - Added project zip export/download and project zip import for moving Punkdom projects between installations.
 - Changed project deletion to move folders into `.punkdom/Trash`, with a Deleted section that supports restore and permanent deletion.
 - Made the Deleted projects section collapsed by default on every page load.

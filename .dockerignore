@@ -11,6 +11,3 @@ output
 log
 *.log
 .DS_Store
-Dockerfile
-docker-compose.yml
-deploy/docker-compose.yml
