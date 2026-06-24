@@ -2,7 +2,18 @@
 
 Punkdom v0.1 是一个本地优先的 AI 创作工作台，用于小说、互动叙事和长篇创意项目的结构化生产。
 
-v0.1 提供写作模式、互动模式、设定集、创作 Agent、技能点、智能体配置、自动化、版本管理、小说导入、角色卡导入、设置和本地 workspace 管理。
+v0.1 提供写作模式、互动模式、设定集、创作 Agent、技能点、智能体配置、自动化、版本管理、项目仓库、文本导入、角色卡导入、设置和本地 workspace 管理。
+
+## v0.1.3 更新
+
+- 品牌标识调整为 `Stone` 图标，并继续保持极简 IDE 风格。
+- 项目仓库完成项目化改造：支持项目重命名时同步重命名底层文件夹、项目 zip 导出/导入、项目简介与创建/编辑时间展示。
+- 删除项目会移动到 `.punkdom/Trash`，并在默认折叠的“已删除”栏目中支持恢复和彻底删除；恢复后仍停留在项目仓库。
+- 设置页新增数据备份：可一键下载完整 `.punkdom` 数据 zip，也可上传备份 zip 覆盖还原全部本地数据。
+- 新增 Docker 发布方案：GitHub Release 同步发布 GHCR 镜像，提供 Docker Compose 模板和 Watchtower 自动更新指引。
+- 优化纸张模式：侧边栏高亮、用户对话气泡、对话卡片和工具卡片更扁平、更贴近主色调。
+- 调整一级菜单顺序和命名：项目仓库放在版本管理之后，叙事编排改为叙事模式，英文项目仓库为 `Projects`。
+- 修复叙事模式规则开关对齐、项目元数据保存/恢复后跳转、删除项目后创建时间丢失等问题。
 
 ## v0.1.2 更新
 
@@ -65,6 +76,41 @@ export PUNKDOM_FRONTEND_PORT="5173"
 ```
 
 配置文件使用 `punkdom_dir` 指定 Punkdom 数据目录。用户级和工作区级配置会忽略该启动级定位参数。
+
+## Docker
+
+Punkdom 的 GitHub Release 会同步发布 Docker 镜像到 GHCR：
+
+```bash
+docker run -d --name punkdom \
+  -p 8080:8080 \
+  -v punkdom-data:/data \
+  ghcr.io/wiltonh/punkdom:latest
+```
+
+Docker 版默认使用单数据卷 `/data` 保存作品、配置、日志和本地状态；镜像内的 `/app` 只保存程序、前端静态资源和内置 Skills。更新镜像不会覆盖 `/data` 中的用户内容。
+
+使用 Docker Compose：
+
+```bash
+curl -L -o docker-compose.yml https://raw.githubusercontent.com/WiltonH/Punkdom/main/deploy/docker-compose.yml
+docker compose up -d
+```
+
+手动更新 Docker 版：
+
+```bash
+docker compose pull punkdom
+docker compose up -d punkdom
+```
+
+自动更新 Docker 版：
+
+```bash
+docker compose --profile auto-update up -d
+```
+
+该 profile 会启动 Watchtower。新镜像发布后，Watchtower 会自动拉取 `ghcr.io/wiltonh/punkdom:latest` 并重启 Punkdom 容器。Docker 环境下应用内“安装更新”不会替换容器里的二进制文件，设置页会显示 Docker 更新命令。
 
 ## Themes
 

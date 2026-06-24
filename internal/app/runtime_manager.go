@@ -2,10 +2,13 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 
 	"github.com/cloudwego/eino/adk"
 
@@ -143,15 +146,74 @@ func (s *WorkspaceRuntimeManager) Books() []BookRecord {
 	records := a.bookRegistry.List()
 	for i := range records {
 		meta, err := a.bookMetaStore.Read(records[i].Path)
-		if err != nil {
-			continue
+		if err == nil {
+			if meta.Title != "" {
+				records[i].Name = meta.Title
+			}
+			records[i].Author = meta.Author
+			records[i].Description = meta.Description
+			records[i].CreatedAt = meta.CreatedAt
+			records[i].UpdatedAt = meta.UpdatedAt
 		}
-		if meta.Title != "" {
-			records[i].Name = meta.Title
+		if latest := latestProjectModTime(records[i].Path); latest != "" && latest > records[i].UpdatedAt {
+			records[i].UpdatedAt = latest
 		}
-		records[i].Author = meta.Author
 	}
 	return records
+}
+
+// DeletedBooks 返回已移入 Trash 的项目列表。
+func (a *App) DeletedBooks() []DeletedBookRecord {
+	return a.runtime().DeletedBooks()
+}
+
+func (s *WorkspaceRuntimeManager) DeletedBooks() []DeletedBookRecord {
+	a := s.app
+	records := a.bookRegistry.Deleted()
+	for i := range records {
+		meta, err := a.bookMetaStore.Read(records[i].Path)
+		if (meta.CreatedAt == "" || err != nil) && records[i].OriginalPath != "" {
+			if originalMeta, originalErr := a.bookMetaStore.Read(records[i].OriginalPath); originalErr == nil && originalMeta.CreatedAt != "" {
+				meta = originalMeta
+				err = nil
+			}
+		}
+		if err == nil {
+			if meta.Title != "" {
+				records[i].Name = meta.Title
+			}
+			records[i].Author = meta.Author
+			records[i].Description = meta.Description
+			records[i].CreatedAt = meta.CreatedAt
+			records[i].UpdatedAt = meta.UpdatedAt
+		}
+		if latest := latestProjectModTime(records[i].Path); latest != "" && latest > records[i].UpdatedAt {
+			records[i].UpdatedAt = latest
+		}
+	}
+	return records
+}
+
+func latestProjectModTime(root string) string {
+	var latest string
+	_ = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if path != root && entry.IsDir() && entry.Name() == ".git" {
+			return filepath.SkipDir
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return nil
+		}
+		mod := info.ModTime().Format(time.RFC3339)
+		if mod > latest {
+			latest = mod
+		}
+		return nil
+	})
+	return latest
 }
 
 // BookInfo 读取指定路径工作区的书籍元信息。
@@ -167,32 +229,86 @@ func (s *WorkspaceRuntimeManager) BookInfo(path string) (book.BookMeta, error) {
 	return s.app.bookMetaStore.Read(absPath)
 }
 
+// BookInfoUpdateResult 表示书籍信息更新后的新 workspace 路径和元信息。
+type BookInfoUpdateResult struct {
+	Workspace string        `json:"workspace"`
+	BookMeta  book.BookMeta `json:"book_meta"`
+}
+
 // UpdateBookInfo 更新指定路径工作区的书籍元信息。
-func (a *App) UpdateBookInfo(path string, title, author, description string) (book.BookMeta, error) {
+func (a *App) UpdateBookInfo(path string, title, author, description string) (BookInfoUpdateResult, error) {
 	return a.runtime().UpdateBookInfo(path, title, author, description)
 }
 
-func (s *WorkspaceRuntimeManager) UpdateBookInfo(path string, title, author, description string) (book.BookMeta, error) {
+func (s *WorkspaceRuntimeManager) UpdateBookInfo(path string, title, author, description string) (BookInfoUpdateResult, error) {
+	a := s.app
 	absPath, err := filepath.Abs(path)
 	if err != nil {
-		return book.BookMeta{}, fmt.Errorf("路径无效: %w", err)
+		return BookInfoUpdateResult{}, fmt.Errorf("路径无效: %w", err)
 	}
-	meta, err := s.app.bookMetaStore.Read(absPath)
+	info, err := os.Stat(absPath)
 	if err != nil {
-		return book.BookMeta{}, err
+		return BookInfoUpdateResult{}, err
 	}
-	if title != "" {
-		meta.Title = title
+	if !info.IsDir() {
+		return BookInfoUpdateResult{}, fmt.Errorf("路径不是目录: %s", absPath)
 	}
-	if author != "" {
-		meta.Author = author
+	meta, err := a.bookMetaStore.Read(absPath)
+	if err != nil {
+		return BookInfoUpdateResult{}, err
 	}
+	cleanTitle := strings.TrimSpace(title)
+	if cleanTitle == "" {
+		cleanTitle = meta.Title
+	}
+	if cleanTitle == "" {
+		cleanTitle = filepath.Base(absPath)
+	}
+	if err := book.ValidateNewName(cleanTitle); err != nil {
+		return BookInfoUpdateResult{}, err
+	}
+	meta.Title = cleanTitle
+	meta.Author = author
 	// description 允许设为空字符串（清除简介），所以总是更新。
 	meta.Description = description
-	return s.app.bookMetaStore.Write(absPath, meta)
+
+	newPath := filepath.Join(filepath.Dir(absPath), cleanTitle)
+	if samePath(absPath, newPath) {
+		written, err := a.bookMetaStore.Write(absPath, meta)
+		if err != nil {
+			return BookInfoUpdateResult{}, err
+		}
+		return BookInfoUpdateResult{Workspace: absPath, BookMeta: written}, nil
+	}
+	if _, err := os.Stat(newPath); err == nil {
+		return BookInfoUpdateResult{}, os.ErrExist
+	} else if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return BookInfoUpdateResult{}, err
+	}
+	log.Printf("[books] rename workspace begin from=%q to=%q", absPath, newPath)
+	if err := os.Rename(absPath, newPath); err != nil {
+		return BookInfoUpdateResult{}, fmt.Errorf("重命名书籍目录失败: %w", err)
+	}
+	written, err := a.bookMetaStore.Move(absPath, newPath, meta)
+	if err != nil {
+		log.Printf("[books] rename metadata failed from=%q to=%q err=%v", absPath, newPath, err)
+		return BookInfoUpdateResult{}, err
+	}
+	if err := a.bookRegistry.ReplacePath(absPath, newPath); err != nil {
+		log.Printf("[books] rename registry update failed from=%q to=%q err=%v", absPath, newPath, err)
+		return BookInfoUpdateResult{}, err
+	}
+	if samePath(a.Workspace(), absPath) {
+		if _, err := s.SwitchWorkspace(context.Background(), newPath); err != nil {
+			log.Printf("[books] rename switch workspace failed new=%q err=%v", newPath, err)
+			return BookInfoUpdateResult{}, err
+		}
+	}
+	log.Printf("[books] rename workspace done from=%q to=%q", absPath, newPath)
+	return BookInfoUpdateResult{Workspace: newPath, BookMeta: written}, nil
 }
 
-// RemoveBook 移除书籍记录，不删除磁盘目录。
+// RemoveBook 将项目移动到 Trash，并从正常项目列表移除。
 func (a *App) RemoveBook(path string) (string, error) {
 	return a.runtime().RemoveBook(path)
 }
@@ -204,13 +320,39 @@ func (s *WorkspaceRuntimeManager) RemoveBook(path string) (string, error) {
 		return "", fmt.Errorf("路径无效: %w", err)
 	}
 	wasCurrent := a.Workspace() == absPath
-	if err := a.bookRegistry.Remove(absPath); err != nil {
+	meta, metaErr := a.bookMetaStore.Read(absPath)
+	if metaErr != nil {
+		log.Printf("[books] read metadata before move to Trash failed path=%q err=%v", absPath, metaErr)
+	}
+	if _, err := a.bookRegistry.MoveToTrashWithMeta(absPath, meta); err != nil {
 		return "", err
 	}
 	if wasCurrent {
 		return s.activateFallbackWorkspace(context.Background())
 	}
 	return a.Workspace(), nil
+}
+
+// RestoreBook 从 Trash 恢复项目并切换到恢复后的项目。
+func (a *App) RestoreBook(ctx context.Context, path string) (string, error) {
+	return a.runtime().RestoreBook(ctx, path)
+}
+
+func (s *WorkspaceRuntimeManager) RestoreBook(ctx context.Context, path string) (string, error) {
+	restoredPath, err := s.app.bookRegistry.Restore(path)
+	if err != nil {
+		return "", err
+	}
+	return s.SwitchWorkspace(ctx, restoredPath)
+}
+
+// PurgeDeletedBook 彻底删除 Trash 中的项目目录。
+func (a *App) PurgeDeletedBook(path string) error {
+	return a.runtime().PurgeDeletedBook(path)
+}
+
+func (s *WorkspaceRuntimeManager) PurgeDeletedBook(path string) error {
+	return s.app.bookRegistry.Purge(path)
 }
 
 // ReorderBooks 保存书籍管理页的自定义排序。
@@ -282,6 +424,15 @@ func (s *WorkspaceRuntimeManager) CreateBook(ctx context.Context, parentDir, tit
 	}
 
 	return workspace, meta, nil
+}
+
+func samePath(left, right string) bool {
+	if left == "" || right == "" {
+		return left == right
+	}
+	leftAbs, leftErr := filepath.Abs(left)
+	rightAbs, rightErr := filepath.Abs(right)
+	return leftErr == nil && rightErr == nil && leftAbs == rightAbs
 }
 
 // VersionStatus 返回当前书籍 workspace 的本地版本状态。

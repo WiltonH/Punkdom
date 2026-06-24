@@ -144,8 +144,8 @@ describe('App', () => {
       </TooltipProvider>,
     )
 
-    expect(await screen.findByText('当前 Punkdom 数据目录下还没有书籍')).toBeInTheDocument()
-    expect(screen.getByText('请先新建一本书，或导入现有小说/角色卡创建书籍。创建后再进入写作、互动、Agent 和自动化工作流。')).toBeInTheDocument()
+    expect(await screen.findByText('当前 Punkdom 数据目录下还没有项目')).toBeInTheDocument()
+    expect(screen.getByText('请先新建一个项目，或导入现有文本/角色卡创建项目。创建后再进入工作台、互动、Agent 和自动化工作流。')).toBeInTheDocument()
 
     await waitFor(() => expect(fetchCallPaths()).toContain('/api/workspace/current'))
     const paths = fetchCallPaths()
@@ -157,13 +157,13 @@ describe('App', () => {
     expect(paths).not.toContain('/api/sessions')
     expect(paths).not.toContain('/api/session/messages')
     expect(paths).not.toContain('/api/chat/active')
-    expectOnlyActivePrimaryMenu('书籍管理')
+    expectOnlyActivePrimaryMenu('项目仓库')
 
     const header = screen.getByText('Punkdom').closest('header')
     expect(header).not.toBeNull()
     await user.click(within(header as HTMLElement).getByRole('button', { name: '写作模式' }))
-    expect(await screen.findByText('当前 Punkdom 数据目录下还没有书籍')).toBeInTheDocument()
-    expectOnlyActivePrimaryMenu('书籍管理')
+    expect(await screen.findByText('当前 Punkdom 数据目录下还没有项目')).toBeInTheDocument()
+    expectOnlyActivePrimaryMenu('项目仓库')
     expect(fetchCallPaths()).not.toContain('/api/chat/active')
   })
 
@@ -250,8 +250,8 @@ describe('App', () => {
     window.localStorage.setItem('punkdom.activity.order.v1', JSON.stringify(['automations', 'agents', 'books', 'writing', 'story']))
     window.localStorage.setItem('punkdom.activity.order.ide.v1', JSON.stringify(['automations', 'agents', 'books', 'writing']))
     window.localStorage.setItem('punkdom.activity.order.interactive.v1', JSON.stringify(['agents', 'books', 'story']))
-    window.localStorage.setItem('punkdom.activity.order.ide.v2', JSON.stringify(['books', 'agents', 'writing', 'lore', 'creator', 'teller', 'versions', 'skills', 'automations']))
-    window.localStorage.setItem('punkdom.activity.order.interactive.v2', JSON.stringify(['automations', 'story', 'timeline', 'lore', 'creator', 'teller', 'books', 'skills', 'agents']))
+    window.localStorage.setItem('punkdom.activity.order.ide.v4', JSON.stringify(['books', 'agents', 'writing', 'lore', 'creator', 'teller', 'versions', 'skills', 'automations']))
+    window.localStorage.setItem('punkdom.activity.order.interactive.v4', JSON.stringify(['automations', 'story', 'timeline', 'lore', 'creator', 'teller', 'books', 'skills', 'agents']))
 
     render(
       <TooltipProvider>
@@ -260,7 +260,7 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    expect(primaryMenuLabels().slice(0, 4)).toEqual(['书籍管理', '智能体', '工作台', '设定集'])
+    expect(primaryMenuLabels().slice(0, 4)).toEqual(['项目仓库', '智能体', '工作台', '设定集'])
     expect(primaryMenuLabels()).not.toContain('创作者')
 
     const header = screen.getByText('Punkdom').closest('header')
@@ -278,13 +278,13 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事编排', '版本管理', '书籍管理', '技能点', '智能体', '自动化'])
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事模式', '技能点', '智能体', '自动化', '版本管理', '项目仓库'])
 
     await act(async () => {
       await i18next.changeLanguage('en-US')
     })
 
-    expect(primaryMenuLabels().slice(0, 8)).toEqual(['Workbench', 'Premise', 'Narratives', 'Versions', 'Repository', 'Skills', 'Agents', 'Automation'])
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['Workbench', 'Premise', 'Narratives', 'Skills', 'Agents', 'Automation', 'Versions', 'Projects'])
     expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
   })
 
@@ -297,13 +297,13 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事编排', '版本管理', '书籍管理', '技能点', '智能体', '自动化'])
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事模式', '技能点', '智能体', '自动化', '版本管理', '项目仓库'])
 
     await user.click(screen.getByRole('button', { name: '切换到英文' }))
-    expect(primaryMenuLabels().slice(0, 8)).toEqual(['Workbench', 'Premise', 'Narratives', 'Versions', 'Repository', 'Skills', 'Agents', 'Automation'])
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['Workbench', 'Premise', 'Narratives', 'Skills', 'Agents', 'Automation', 'Versions', 'Projects'])
 
     await user.click(screen.getByRole('button', { name: 'Switch to Chinese' }))
-    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事编排', '版本管理', '书籍管理', '技能点', '智能体', '自动化'])
+    expect(primaryMenuLabels().slice(0, 8)).toEqual(['工作台', '设定集', '叙事模式', '技能点', '智能体', '自动化', '版本管理', '项目仓库'])
   })
 
   it('opens CREATOR.md from the lore workspace page', async () => {
@@ -345,11 +345,11 @@ describe('App', () => {
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
     expect(screen.queryByRole('button', { name: '导入酒馆角色卡' })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: '书籍管理' }))
+    await user.click(screen.getByRole('button', { name: '项目仓库' }))
 
-    expect(await screen.findByText('书架')).toBeInTheDocument()
+    expect(await screen.findByText('项目')).toBeInTheDocument()
     expect(screen.queryByText('打开其他目录')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '关闭书籍管理' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '关闭项目仓库' })).toBeInTheDocument()
     expect(screen.queryByPlaceholderText('输入工作区目录路径...')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: '导入酒馆角色卡' }))
     expect(screen.getByText('选择 PNG 或 JSON 角色卡，并决定写入当前书还是创建一本新书。')).toBeInTheDocument()
@@ -364,14 +364,14 @@ describe('App', () => {
     )
 
     await waitFor(() => expect(globalThis.fetch).toHaveBeenCalledWith('/api/chat/active', undefined))
-    await user.click(screen.getByRole('button', { name: '书籍管理' }))
-    await screen.findByText('书架')
-    await user.click(screen.getByRole('button', { name: '新建书籍' }))
-    expect(screen.getByText('新书将创建在')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '项目仓库' }))
+    await screen.findByText('项目')
+    await user.click(screen.getByRole('button', { name: '新建项目' }))
+    expect(screen.getByText('新项目将创建在')).toBeInTheDocument()
     expect(screen.getByText('/punkdom/user')).toBeInTheDocument()
-    const createForm = screen.getByText('新书将创建在').closest('.space-y-3')
+    const createForm = screen.getByText('新项目将创建在').closest('.space-y-3')
     expect(createForm).not.toBeNull()
-    const titleInput = within(createForm as HTMLElement).getByPlaceholderText('书名（必填）')
+    const titleInput = within(createForm as HTMLElement).getByPlaceholderText('项目名称（必填）')
     const createButton = within(createForm as HTMLElement).getByRole('button', { name: '创建' })
     expect(titleInput).toBeVisible()
     fireEvent.change(titleInput, { target: { value: 'New Book' } })
@@ -678,12 +678,12 @@ describe('App', () => {
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
     expectOnlyActivePrimaryMenu('智能体')
 
-    await user.click(screen.getByRole('button', { name: '书籍管理' }))
-    expect(await screen.findByRole('button', { name: '关闭书籍管理' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '项目仓库' }))
+    expect(await screen.findByRole('button', { name: '关闭项目仓库' })).toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toHaveClass('bg-[var(--punkdom-active)]')
     expect(screen.getByRole('button', { name: '剧情' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: '工作台' })).not.toBeInTheDocument()
-    expectOnlyActivePrimaryMenu('书籍管理')
+    expectOnlyActivePrimaryMenu('项目仓库')
 
     await user.click(screen.getByRole('button', { name: '设置' }))
     expect(await screen.findByRole('button', { name: '关闭设置' })).toBeInTheDocument()

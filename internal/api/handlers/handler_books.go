@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"errors"
+	"os"
 	"strings"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -12,6 +14,13 @@ import (
 func (h *Handlers) HandleBooks(ctx context.Context, c *app.RequestContext) {
 	writeJSON(c, consts.StatusOK, map[string]interface{}{
 		"books": h.app.Books(),
+	})
+}
+
+// HandleDeletedBooks GET /api/books/deleted — 返回 Trash 中可恢复的项目。
+func (h *Handlers) HandleDeletedBooks(ctx context.Context, c *app.RequestContext) {
+	writeJSON(c, consts.StatusOK, map[string]interface{}{
+		"books": h.app.DeletedBooks(),
 	})
 }
 
@@ -54,7 +63,7 @@ func (h *Handlers) HandleCreateBook(ctx context.Context, c *app.RequestContext) 
 	})
 }
 
-// handleBookRemove POST /api/books/remove — 移除书籍记录，不删除磁盘目录。
+// handleBookRemove POST /api/books/remove — 将项目移动到 Trash。
 func (h *Handlers) HandleBookRemove(ctx context.Context, c *app.RequestContext) {
 	var req struct {
 		Path string `json:"path"`
@@ -72,6 +81,46 @@ func (h *Handlers) HandleBookRemove(ctx context.Context, c *app.RequestContext) 
 		"message":   messageKey(c, "api.books.removed"),
 		"workspace": workspace,
 	})
+}
+
+// HandleBookRestore POST /api/books/restore — 从 Trash 恢复项目。
+func (h *Handlers) HandleBookRestore(ctx context.Context, c *app.RequestContext) {
+	var req struct {
+		Path string `json:"path"`
+	}
+	if err := c.BindJSON(&req); err != nil || req.Path == "" {
+		writeErrorKey(c, consts.StatusBadRequest, "api.common.pathRequired")
+		return
+	}
+	workspace, err := h.app.RestoreBook(ctx, req.Path)
+	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			writeErrorKey(c, consts.StatusConflict, "api.workspace.targetExists")
+			return
+		}
+		writeError(c, consts.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(c, consts.StatusOK, map[string]string{
+		"message":   messageKey(c, "api.books.restored"),
+		"workspace": workspace,
+	})
+}
+
+// HandleBookPurge POST /api/books/purge — 彻底删除 Trash 中的项目文件。
+func (h *Handlers) HandleBookPurge(ctx context.Context, c *app.RequestContext) {
+	var req struct {
+		Path string `json:"path"`
+	}
+	if err := c.BindJSON(&req); err != nil || req.Path == "" {
+		writeErrorKey(c, consts.StatusBadRequest, "api.common.pathRequired")
+		return
+	}
+	if err := h.app.PurgeDeletedBook(req.Path); err != nil {
+		writeError(c, consts.StatusBadRequest, err.Error())
+		return
+	}
+	writeJSON(c, consts.StatusOK, map[string]string{"message": messageKey(c, "api.books.purged")})
 }
 
 // handleBookReorder POST /api/books/reorder — 保存书籍管理页自定义排序。
@@ -121,10 +170,18 @@ func (h *Handlers) HandleUpdateBookInfo(ctx context.Context, c *app.RequestConte
 		writeErrorKey(c, consts.StatusBadRequest, "api.books.pathRequired")
 		return
 	}
-	meta, err := h.app.UpdateBookInfo(req.Path, req.Title, req.Author, req.Description)
+	result, err := h.app.UpdateBookInfo(req.Path, req.Title, req.Author, req.Description)
 	if err != nil {
+		if errors.Is(err, os.ErrExist) {
+			writeErrorKey(c, consts.StatusConflict, "api.workspace.targetExists")
+			return
+		}
+		if strings.Contains(err.Error(), "新名称") || strings.Contains(err.Error(), "隐藏文件名") || strings.Contains(err.Error(), "路径不是目录") {
+			writeError(c, consts.StatusBadRequest, err.Error())
+			return
+		}
 		writeError(c, consts.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(c, consts.StatusOK, meta)
+	writeJSON(c, consts.StatusOK, result)
 }

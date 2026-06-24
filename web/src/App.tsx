@@ -290,6 +290,12 @@ function App() {
     notifyVersionChange()
   }
 
+  const handleRefreshCurrentBook = (newPath: string) => {
+    setWorkspace(newPath)
+    refreshAll()
+    notifyVersionChange()
+  }
+
   const handleSaveCurrentFile = useCallback(async (content: string) => {
     const saved = await saveCurrentFile(content)
     if (saved) notifyVersionChange()
@@ -597,6 +603,7 @@ function App() {
         onCloseSettings={() => setSettingsOpen(false)}
         onToggleInteractiveRightPanel={() => setInteractiveRightVisible((value) => !value)}
         onSwitchBook={handleWorkspaceSwitch}
+        onRefreshCurrentBook={handleRefreshCurrentBook}
         onBooksChange={refreshBooks}
         onOpenCharacterCardImport={handleOpenCharacterCardImportFromBooks}
         onSetSidebarView={setSidebarView}

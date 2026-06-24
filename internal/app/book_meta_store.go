@@ -86,6 +86,31 @@ func (s *BookMetaStore) Write(path string, meta book.BookMeta) (book.BookMeta, e
 	return meta, nil
 }
 
+// Move 将用户级书籍元信息从旧 workspace 路径迁移到新 workspace 路径。
+func (s *BookMetaStore) Move(fromPath, toPath string, meta book.BookMeta) (book.BookMeta, error) {
+	fromAbs, err := filepath.Abs(fromPath)
+	if err != nil {
+		return book.BookMeta{}, fmt.Errorf("旧路径无效: %w", err)
+	}
+	toAbs, err := filepath.Abs(toPath)
+	if err != nil {
+		return book.BookMeta{}, fmt.Errorf("新路径无效: %w", err)
+	}
+
+	written, err := s.Write(toAbs, meta)
+	if err != nil {
+		return book.BookMeta{}, err
+	}
+	fromMetaPath := s.metaPath(fromAbs)
+	toMetaPath := s.metaPath(toAbs)
+	if fromMetaPath != toMetaPath {
+		if err := os.Remove(fromMetaPath); err != nil && !os.IsNotExist(err) {
+			return book.BookMeta{}, fmt.Errorf("清理旧书籍元信息失败: %w", err)
+		}
+	}
+	return written, nil
+}
+
 func (s *BookMetaStore) metaPath(absPath string) string {
 	sum := sha256.Sum256([]byte(absPath))
 	return filepath.Join(s.dir, hex.EncodeToString(sum[:])+".json")

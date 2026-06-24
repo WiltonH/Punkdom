@@ -78,6 +78,7 @@ interface ModeRouterProps {
   onCloseSettings: () => void
   onToggleInteractiveRightPanel: () => void
   onSwitchBook: (path: string) => void
+  onRefreshCurrentBook: (path: string) => void
   onBooksChange: () => void | Promise<void>
   onOpenCharacterCardImport: () => void
   onSetSidebarView: (view: 'outline' | 'files' | 'search') => void
@@ -161,6 +162,7 @@ export function ModeRouter(props: ModeRouterProps) {
     onCloseSettings,
     onToggleInteractiveRightPanel,
     onSwitchBook,
+    onRefreshCurrentBook,
     onBooksChange,
     onOpenCharacterCardImport,
     onSetSidebarView,
@@ -485,6 +487,7 @@ export function ModeRouter(props: ModeRouterProps) {
             punkdomDir={punkdomDir}
             books={books}
             onSwitch={onSwitchBook}
+            onRefreshCurrentBook={onRefreshCurrentBook}
             onBooksChange={onBooksChange}
             onOpenCharacterCardImport={onOpenCharacterCardImport}
             onClose={closeBooks}

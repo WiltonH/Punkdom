@@ -20,6 +20,8 @@ type CheckResult struct {
 	ReleaseNotes    string    `json:"release_notes,omitempty"`
 	Asset           *Asset    `json:"asset,omitempty"`
 	Message         string    `json:"message,omitempty"`
+	Docker          bool      `json:"docker,omitempty"`
+	DockerCommand   string    `json:"docker_update_command,omitempty"`
 }
 
 type InstallResult struct {

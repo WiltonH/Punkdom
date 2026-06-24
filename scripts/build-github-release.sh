@@ -135,6 +135,31 @@ punkdom.exe
 \`\`\`
 
 校验文件完整性请使用 checksums.txt。
+
+Docker 部署：
+
+\`\`\`bash
+docker run -d --name punkdom \\
+  -p 8080:8080 \\
+  -v punkdom-data:/data \\
+  ghcr.io/wiltonh/punkdom:${VERSION}
+\`\`\`
+
+Docker Compose：
+
+\`\`\`bash
+curl -L -o docker-compose.yml https://raw.githubusercontent.com/WiltonH/Punkdom/${VERSION}/deploy/docker-compose.yml
+docker compose up -d
+\`\`\`
+
+Docker 更新：
+
+\`\`\`bash
+docker compose pull punkdom
+docker compose up -d punkdom
+\`\`\`
+
+如启用 compose 中的 Watchtower profile，新镜像发布后会自动拉取并重启 Punkdom 容器。用户作品和配置保存在 /data 数据卷中，更新镜像不会覆盖。
 EOF
 
 echo "==> GitHub Release 产物已生成: ${DIST_DIR}"

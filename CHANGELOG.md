@@ -2,8 +2,27 @@
 
 ## [Unreleased]
 
+## [v0.1.3] - 2026-06-24
+
 - Changed the Punkdom wordmark icon from `Swords` to the Lucide `Stone` icon.
 - Flattened chat message bubbles and tool cards by removing their drop shadows.
+- Renamed the underlying book workspace folder when editing a book title from Book Management, with conflict protection for existing target folders.
+- Renamed Book Management to Project Repository and moved it after Automation in the primary menu.
+- Shortened the English Project Repository label to Projects.
+- Changed the Projects icon to `Layers`, moved Versions between Automation and Projects, and renamed the Chinese Narratives label to `叙事模式`.
+- Improved Paper theme primary sidebar active-state contrast with a warmer selected background and no animated active indicator.
+- Recolored Paper theme user chat bubbles to use a deeper warm neutral instead of the terracotta accent.
+- Aligned narrative injection rule switches with a fixed right column and centered switch thumb geometry.
+- Renamed Project Repository labels from book/bookshelf language to project/text language in Chinese and English.
+- Added Docker image publishing to GHCR, Docker Compose deployment assets, and Docker-specific update guidance that uses image refreshes instead of in-container binary replacement.
+- Added project zip export/download and project zip import for moving Punkdom projects between installations.
+- Changed project deletion to move folders into `.punkdom/Trash`, with a Deleted section that supports restore and permanent deletion.
+- Made the Deleted projects section collapsed by default on every page load.
+- Added project card metadata for description, created time, and last edited time.
+- Kept the Projects view open after saving metadata for the current project.
+- Kept the Projects view open after restoring a deleted project.
+- Preserved project metadata, including creation time, when moving projects to Trash.
+- Added full Punkdom data backup export and overwrite restore controls in Settings.
 
 ## [v0.1.2] - 2026-06-23
 

@@ -1,0 +1,16 @@
+.git
+.github
+.cache
+.agents
+.codex
+node_modules
+web/node_modules
+web/dist
+dist
+output
+log
+*.log
+.DS_Store
+Dockerfile
+docker-compose.yml
+deploy/docker-compose.yml

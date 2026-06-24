@@ -1,0 +1,31 @@
+services:
+  punkdom:
+    image: ghcr.io/wiltonh/punkdom:latest
+    container_name: punkdom
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PUNKDOM_DOCKER: "1"
+      PUNKDOM_DIR: /data/.punkdom
+      PUNKDOM_WORKSPACE: /data/workspaces
+      PUNKDOM_WEB_DIR: /app/web
+      PUNKDOM_SKILLS_DIR: /app/skills
+      PUNKDOM_BACKEND_PORT: "8080"
+    volumes:
+      - punkdom-data:/data
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: punkdom-watchtower
+    restart: unless-stopped
+    profiles:
+      - auto-update
+    command: --cleanup --label-enable --interval 300
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  punkdom-data:

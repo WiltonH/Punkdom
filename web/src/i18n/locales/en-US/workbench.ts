@@ -1,7 +1,7 @@
 const workbench = {
   'workbench.activity.agents': 'Agents',
   'workbench.activity.automations': 'Automation',
-  'workbench.activity.books': 'Repository',
+  'workbench.activity.books': 'Projects',
   'workbench.activity.creator': 'Creator',
   'workbench.activity.lore': 'Premise',
   'workbench.activity.memory': 'Story Memory',
@@ -16,7 +16,7 @@ const workbench = {
   'workbench.activity.writing': 'Workbench',
   'workbench.mode.agents': 'Agents',
   'workbench.mode.automations': 'Automation',
-  'workbench.mode.books': 'Repository',
+  'workbench.mode.books': 'Projects',
   'workbench.mode.ide': 'Writing Workbench',
   'workbench.mode.ideButton': 'Writing Mode',
   'workbench.mode.interactive': 'Interactive Workbench',

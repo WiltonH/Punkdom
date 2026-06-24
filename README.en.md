@@ -2,7 +2,18 @@
 
 Punkdom v0.1 is a local-first AI creative workspace for novels, interactive storytelling, and long-form creative projects.
 
-v0.1 includes Writing Mode, Interactive Mode, premise management, creative Agents, Skills, agent configuration, automations, version management, novel import, character-card import, settings, and local workspace management.
+v0.1 includes Writing Mode, Interactive Mode, premise management, creative Agents, Skills, agent configuration, automations, version management, Projects, text import, character-card import, settings, and local workspace management.
+
+## v0.1.3 Update
+
+- Changed the brand mark to the Lucide `Stone` icon while keeping the minimal IDE-style shell.
+- Expanded Projects into a project-first repository: project title edits rename the underlying folder, project cards show description plus created/edited times, and projects can be exported/imported as zip files.
+- Project deletion now moves folders into `.punkdom/Trash`; the Deleted section is collapsed by default and supports restore plus permanent deletion while staying in Projects.
+- Added Data Backup in Settings for downloading the full `.punkdom` data directory as a zip and restoring from a backup zip with overwrite semantics.
+- Added Docker publishing: GitHub Releases now publish GHCR images, Docker Compose assets, and Watchtower auto-update guidance.
+- Polished Paper Mode with stronger sidebar active states, warmer user message bubbles, and flatter chat/tool cards.
+- Updated primary navigation order and naming: Projects now follows Versions, and the Chinese Narratives label is `叙事模式`.
+- Fixed narrative rule switch alignment, Projects navigation after metadata save/restore, and missing created time after moving projects to Trash.
 
 ## v0.1.2 Update
 
@@ -65,6 +76,41 @@ export PUNKDOM_FRONTEND_PORT="5173"
 ```
 
 Use `punkdom_dir` in `config.toml` for the startup-level Punkdom data directory. User-level and workspace-level settings ignore this locator field.
+
+## Docker
+
+Punkdom GitHub Releases also publish Docker images to GHCR:
+
+```bash
+docker run -d --name punkdom \
+  -p 8080:8080 \
+  -v punkdom-data:/data \
+  ghcr.io/wiltonh/punkdom:latest
+```
+
+The Docker build uses a single `/data` volume for projects, settings, logs, and local state. The image `/app` directory only contains the Punkdom binary, static web assets, and bundled Skills. Updating the image does not overwrite user content in `/data`.
+
+Use Docker Compose:
+
+```bash
+curl -L -o docker-compose.yml https://raw.githubusercontent.com/WiltonH/Punkdom/main/deploy/docker-compose.yml
+docker compose up -d
+```
+
+Manually update Docker deployments:
+
+```bash
+docker compose pull punkdom
+docker compose up -d punkdom
+```
+
+Enable automatic Docker updates:
+
+```bash
+docker compose --profile auto-update up -d
+```
+
+This profile starts Watchtower. When a new image is published, Watchtower pulls `ghcr.io/wiltonh/punkdom:latest` and restarts the Punkdom container. In Docker, the in-app update installer does not replace the binary inside the container; the settings page shows the Docker update command instead.
 
 ## Themes
 

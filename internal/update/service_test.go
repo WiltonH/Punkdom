@@ -66,6 +66,49 @@ func TestCheckFallsBackToReleaseRedirectWhenGitHubAPIRateLimited(t *testing.T) {
 	}
 }
 
+func TestCheckDisablesInstallInDockerRuntime(t *testing.T) {
+	t.Setenv("PUNKDOM_DOCKER", "1")
+	client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+		return testResponse(req, http.StatusOK, "", `{
+			"tag_name":"v0.1.2",
+			"html_url":"https://example.test/WiltonH/Punkdom/releases/tag/v0.1.2",
+			"assets":[{"name":"punkdom-v0.1.2-linux-x64.tar.gz","url":"asset-api-url","browser_download_url":"asset-web-url","size":123}]
+		}`), nil
+	})}
+
+	service := &Service{
+		repository:     "WiltonH/Punkdom",
+		currentVersion: "0.1.1",
+		httpClient:     client,
+		apiBaseURL:     "https://example.test/repos/",
+		webBaseURL:     "https://example.test/",
+	}
+	result, err := service.Check(context.Background())
+	if err != nil {
+		t.Fatalf("Check should work in Docker runtime: %v", err)
+	}
+	if !result.Docker {
+		t.Fatalf("Docker flag should be true")
+	}
+	if !result.UpdateAvailable {
+		t.Fatalf("UpdateAvailable should be true")
+	}
+	if result.CanInstall {
+		t.Fatalf("Docker runtime should not allow application-level install")
+	}
+	if result.DockerCommand == "" || !strings.Contains(result.DockerCommand, "docker compose pull punkdom") {
+		t.Fatalf("DockerCommand missing update command: %q", result.DockerCommand)
+	}
+}
+
+func TestInstallRejectsDockerRuntime(t *testing.T) {
+	t.Setenv("PUNKDOM_DOCKER", "true")
+	service := &Service{}
+	if _, err := service.Install(context.Background()); err == nil || !strings.Contains(err.Error(), "Docker") {
+		t.Fatalf("Install should reject Docker runtime, got %v", err)
+	}
+}
+
 func TestReleaseTagFromURL(t *testing.T) {
 	tests := []string{
 		"https://github.com/WiltonH/Punkdom/releases/tag/v0.1.1",

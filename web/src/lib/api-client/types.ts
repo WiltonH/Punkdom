@@ -123,7 +123,21 @@ export interface BookRecord {
   name: string
   path: string
   author: string
+  description?: string
+  created_at?: string
+  updated_at?: string
   last_opened_at: string
+}
+
+export interface DeletedBookRecord {
+  name: string
+  path: string
+  original_path: string
+  author: string
+  description?: string
+  created_at?: string
+  updated_at?: string
+  deleted_at: string
 }
 
 export interface ChapterSummary {
@@ -241,6 +255,11 @@ export interface BookMeta {
   description: string
   created_at: string
   updated_at: string
+}
+
+export interface BookInfoUpdateResult {
+  workspace: string
+  book_meta: BookMeta
 }
 
 export type VersionSource = 'manual' | 'timer' | 'agent' | 'rollback_backup'

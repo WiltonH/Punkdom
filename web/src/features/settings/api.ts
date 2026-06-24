@@ -1,4 +1,4 @@
-import { jsonHeaders, requestJSON } from '@/lib/api-client'
+import { fetchAPI, jsonHeaders, readErrorMessage, requestJSON } from '@/lib/api-client'
 import type { LayeredSettings, Settings, UpdateCheckResult, UpdateInstallResult } from './types'
 
 export async function fetchSettings(): Promise<LayeredSettings> {
@@ -27,4 +27,28 @@ export async function checkForUpdate(): Promise<UpdateCheckResult> {
 
 export async function installUpdate(): Promise<UpdateInstallResult> {
   return requestJSON('/api/update/install', { method: 'POST' })
+}
+
+export async function exportDataBackup(): Promise<{ blob: Blob; filename: string }> {
+  const res = await fetchAPI('/api/backup/export')
+  if (!res.ok) throw new Error(await readErrorMessage(res))
+  const disposition = res.headers.get('content-disposition') || ''
+  const filename = filenameFromDisposition(disposition) || `Punkdom-${new Date().toISOString().replace(/[:.]/g, '-')}.zip`
+  return { blob: await res.blob(), filename }
+}
+
+export async function restoreDataBackup(file: File): Promise<{ workspace: string; message: string }> {
+  const form = new FormData()
+  form.append('file', file)
+  return requestJSON('/api/backup/restore', {
+    method: 'POST',
+    body: form,
+  })
+}
+
+function filenameFromDisposition(disposition: string) {
+  const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+  if (utf8?.[1]) return decodeURIComponent(utf8[1])
+  const ascii = disposition.match(/filename="?([^"]+)"?/i)
+  return ascii?.[1] ? ascii[1] : ''
 }

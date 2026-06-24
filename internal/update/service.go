@@ -26,6 +26,7 @@ import (
 
 const githubAPI = "https://api.github.com/repos/"
 const githubWeb = "https://github.com/"
+const dockerUpdateCommand = "docker compose pull punkdom && docker compose up -d punkdom"
 
 type Service struct {
 	repository     string
@@ -62,17 +63,25 @@ func (s *Service) Check(ctx context.Context) (CheckResult, error) {
 		CurrentVersion:  current,
 		LatestVersion:   latest,
 		UpdateAvailable: updateAvailable,
-		CanInstall:      updateAvailable && asset != nil,
+		CanInstall:      updateAvailable && asset != nil && !isDockerRuntime(),
 		Platform:        platform,
 		ReleaseURL:      release.HTMLURL,
 		PublishedAt:     release.PublishedAt,
 		ReleaseNotes:    release.Body,
 		Message:         "当前已是最新版本",
+		Docker:          isDockerRuntime(),
+	}
+	if result.Docker {
+		result.DockerCommand = dockerUpdateCommand
 	}
 	if asset != nil {
 		result.Asset = &Asset{Name: asset.Name, Size: asset.Size, DownloadURL: asset.DownloadURL, BrowserDownloadURL: asset.BrowserDownloadURL}
 	}
 	switch {
+	case result.Docker && updateAvailable:
+		result.Message = "Docker 版请通过镜像更新：docker compose pull punkdom && docker compose up -d punkdom；如启用 Watchtower，会自动拉取新镜像并重启容器"
+	case result.Docker:
+		result.Message = "当前 Docker 镜像已是最新版本"
 	case isDevVersion(current):
 		result.Message = "开发版本不支持应用内安装更新，请使用 Release 包运行后再检查"
 	case latest == "":
@@ -90,6 +99,9 @@ func (s *Service) Check(ctx context.Context) (CheckResult, error) {
 }
 
 func (s *Service) Install(ctx context.Context) (InstallResult, error) {
+	if isDockerRuntime() {
+		return InstallResult{}, errors.New("Docker 版不支持应用内替换二进制；请使用 docker compose pull punkdom && docker compose up -d punkdom 更新镜像，或启用 Watchtower 自动更新")
+	}
 	check, err := s.Check(ctx)
 	if err != nil {
 		return InstallResult{}, err
@@ -131,6 +143,11 @@ func (s *Service) Install(ctx context.Context) (InstallResult, error) {
 		return s.stageWindowsUpdate(packageRoot, check)
 	}
 	return s.installNow(packageRoot, check)
+}
+
+func isDockerRuntime() bool {
+	return strings.EqualFold(strings.TrimSpace(os.Getenv("PUNKDOM_DOCKER")), "1") ||
+		strings.EqualFold(strings.TrimSpace(os.Getenv("PUNKDOM_DOCKER")), "true")
 }
 
 func (s *Service) latestRelease(ctx context.Context) (githubRelease, error) {

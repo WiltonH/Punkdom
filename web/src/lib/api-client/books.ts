@@ -1,13 +1,34 @@
-import { fetchAPI, jsonHeaders, parseSSEStream, requestJSON } from './client'
-import type { BookMeta, BookRecord, NovelImportPreview, NovelImportResult, SSEEvent } from './types'
+import { fetchAPI, jsonHeaders, parseSSEStream, readErrorMessage, requestJSON } from './client'
+import type { BookInfoUpdateResult, BookMeta, BookRecord, DeletedBookRecord, NovelImportPreview, NovelImportResult, SSEEvent } from './types'
 
 export async function getBooks(): Promise<BookRecord[]> {
   const data = await requestJSON<{ books: BookRecord[] }>('/api/books')
   return data.books || []
 }
 
+export async function getDeletedBooks(): Promise<DeletedBookRecord[]> {
+  const data = await requestJSON<{ books: DeletedBookRecord[] }>('/api/books/deleted')
+  return data.books || []
+}
+
 export async function removeBook(path: string): Promise<{ message: string; workspace: string }> {
   return requestJSON('/api/books/remove', {
+    method: 'POST',
+    headers: jsonHeaders,
+    body: JSON.stringify({ path }),
+  })
+}
+
+export async function restoreBook(path: string): Promise<{ message: string; workspace: string }> {
+  return requestJSON('/api/books/restore', {
+    method: 'POST',
+    headers: jsonHeaders,
+    body: JSON.stringify({ path }),
+  })
+}
+
+export async function purgeDeletedBook(path: string): Promise<{ message: string }> {
+  return requestJSON('/api/books/purge', {
     method: 'POST',
     headers: jsonHeaders,
     body: JSON.stringify({ path }),
@@ -84,11 +105,26 @@ export async function createBook(title: string, author?: string, description?: s
   })
 }
 
+export async function exportProjectZip(path: string): Promise<Blob> {
+  const res = await fetchAPI(`/api/books/export?path=${encodeURIComponent(path)}`)
+  if (!res.ok) throw new Error(await readErrorMessage(res))
+  return res.blob()
+}
+
+export async function importProjectZip(file: File): Promise<{ workspace: string; book_meta: BookMeta }> {
+  const form = new FormData()
+  form.append('file', file)
+  return requestJSON('/api/books/import-project', {
+    method: 'POST',
+    body: form,
+  })
+}
+
 export async function getBookInfo(path: string): Promise<BookMeta> {
   return requestJSON(`/api/books/info?path=${encodeURIComponent(path)}`)
 }
 
-export async function updateBookInfo(path: string, title: string, author: string, description: string): Promise<BookMeta> {
+export async function updateBookInfo(path: string, title: string, author: string, description: string): Promise<BookInfoUpdateResult> {
   return requestJSON('/api/books/info', {
     method: 'PUT',
     headers: jsonHeaders,

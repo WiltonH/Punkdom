@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { BookOpen, Bot, Clock3, Database, FileText, History, MessageSquareText, Moon, NotebookText, PanelLeft, PenLine, Settings, SlidersHorizontal, Sparkles, Stone, Sun } from 'lucide-react'
+import { BookOpen, Bot, Clock3, Database, History, MessageSquareText, Moon, NotebookText, PanelLeft, PenLine, Settings, SlidersHorizontal, Sparkles, SquareLibrary, Stone, Sun, Waves } from 'lucide-react'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { WorkspaceLayout } from '@/components/layout/workspace-layout'
 import { WorkspaceMobileLayout, type MobileNavItem } from '@/components/layout/workspace-mobile-layout'
@@ -63,12 +63,20 @@ const LEGACY_SCOPED_ACTIVITY_ORDER_STORAGE_KEYS: Record<ActivityOrderScope, stri
   ide: 'punkdom.activity.order.ide.v1',
   interactive: 'punkdom.activity.order.interactive.v1',
 }
-const ACTIVITY_ORDER_STORAGE_KEYS: Record<ActivityOrderScope, string> = {
+const LEGACY_V2_ACTIVITY_ORDER_STORAGE_KEYS: Record<ActivityOrderScope, string> = {
   ide: 'punkdom.activity.order.ide.v2',
   interactive: 'punkdom.activity.order.interactive.v2',
 }
-const DEFAULT_IDE_ACTIVITY_ORDER: ActivityItemId[] = ['writing', 'lore', 'teller', 'versions', 'books', 'skills', 'agents', 'automations']
-const DEFAULT_INTERACTIVE_ACTIVITY_ORDER: ActivityItemId[] = ['story', 'timeline', 'memory', 'lore', 'teller', 'versions', 'books', 'skills', 'agents', 'automations']
+const LEGACY_V3_ACTIVITY_ORDER_STORAGE_KEYS: Record<ActivityOrderScope, string> = {
+  ide: 'punkdom.activity.order.ide.v3',
+  interactive: 'punkdom.activity.order.interactive.v3',
+}
+const ACTIVITY_ORDER_STORAGE_KEYS: Record<ActivityOrderScope, string> = {
+  ide: 'punkdom.activity.order.ide.v4',
+  interactive: 'punkdom.activity.order.interactive.v4',
+}
+const DEFAULT_IDE_ACTIVITY_ORDER: ActivityItemId[] = ['writing', 'lore', 'teller', 'skills', 'agents', 'automations', 'versions', 'books']
+const DEFAULT_INTERACTIVE_ACTIVITY_ORDER: ActivityItemId[] = ['story', 'timeline', 'memory', 'lore', 'teller', 'skills', 'agents', 'automations', 'versions', 'books']
 
 export function WorkbenchShell({
   mode,
@@ -306,7 +314,7 @@ export function WorkbenchShell({
       label: t('workbench.activity.books'),
       onClick: openBooks,
       active: mode === 'books' && !settingsOpen,
-      icon: <BookOpen className="h-4 w-4" />,
+      icon: <SquareLibrary className="h-4 w-4" />,
     },
     {
       id: 'versions',
@@ -648,7 +656,6 @@ function ActivityButton({
       className={`${className || ''} relative overflow-hidden ${expanded ? 'gap-3 px-3' : ''} ${active ? 'is-active' : ''}`}
       {...props}
     >
-      {active && <motion.span layoutId="workbench-activity-active" className="absolute inset-0 rounded-[var(--punkdom-radius)] bg-[var(--punkdom-active)]" transition={punkdomSpring} />}
       <span className="relative z-10 flex shrink-0 items-center justify-center">{children}</span>
       <AnimatePresence initial={false}>
         {expanded && (
@@ -695,7 +702,7 @@ function themeLabelKey(theme: AppTheme) {
 
 function themeIconFor(theme: AppTheme) {
   if (theme === 'light') return Sun
-  if (theme === 'paper') return FileText
+  if (theme === 'paper') return Waves
   return Moon
 }
 
@@ -758,6 +765,10 @@ function cleanupLegacyActivityOrderStorage() {
   window.localStorage.removeItem(LEGACY_ACTIVITY_ORDER_STORAGE_KEY)
   window.localStorage.removeItem(LEGACY_SCOPED_ACTIVITY_ORDER_STORAGE_KEYS.ide)
   window.localStorage.removeItem(LEGACY_SCOPED_ACTIVITY_ORDER_STORAGE_KEYS.interactive)
+  window.localStorage.removeItem(LEGACY_V2_ACTIVITY_ORDER_STORAGE_KEYS.ide)
+  window.localStorage.removeItem(LEGACY_V2_ACTIVITY_ORDER_STORAGE_KEYS.interactive)
+  window.localStorage.removeItem(LEGACY_V3_ACTIVITY_ORDER_STORAGE_KEYS.ide)
+  window.localStorage.removeItem(LEGACY_V3_ACTIVITY_ORDER_STORAGE_KEYS.interactive)
 }
 
 function toSortableActivityId(scope: ActivityOrderScope, id: ActivityItemId): SortableActivityItemId {

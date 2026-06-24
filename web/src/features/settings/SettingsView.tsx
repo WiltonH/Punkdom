@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import type { ReactNode } from 'react'
-import { ChevronDown, ChevronUp, Download, ExternalLink, Loader2, Plus, RefreshCw, Save, Settings as SettingsIcon, Trash2, X } from 'lucide-react'
+import type { ReactNode, RefObject } from 'react'
+import { ChevronDown, ChevronUp, Download, ExternalLink, Loader2, Plus, RefreshCw, Save, Settings as SettingsIcon, Trash2, Upload, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { LayeredSettings, ModelProfileSettings, Settings, SettingsLayer, UpdateCheckResult, UpdateInstallResult } from './types'
-import { checkForUpdate, fetchSettings, installUpdate, updateUserSettings, updateWorkspaceSettings } from './api'
+import { checkForUpdate, exportDataBackup, fetchSettings, installUpdate, restoreDataBackup, updateUserSettings, updateWorkspaceSettings } from './api'
 import { FONT_OPTIONS, fontLabelKeyFor } from './font-options'
 import { settingsForLayer, useAutoSaveSettings } from './use-auto-save-settings'
 import { getInteractiveTellers } from '@/features/interactive/api'
@@ -12,7 +12,7 @@ import { InlineErrorNotice } from '@/components/common/inline-error-notice'
 import { LOCALE_OPTIONS } from '@/i18n'
 import { markAutoUpdateChecked, shouldRunAutoUpdateCheck } from './update-check-cache'
 
-type SettingsSectionId = 'model' | 'paths' | 'appearance' | 'updates' | 'agent' | 'ide-editor' | 'versions' | 'interactive'
+type SettingsSectionId = 'model' | 'paths' | 'appearance' | 'updates' | 'backup' | 'agent' | 'ide-editor' | 'versions' | 'interactive'
 
 type SettingsSection = {
   id: SettingsSectionId
@@ -42,12 +42,17 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
   const [checkingUpdate, setCheckingUpdate] = useState(false)
   const [installingUpdate, setInstallingUpdate] = useState(false)
   const [updateError, setUpdateError] = useState<string | null>(null)
+  const [exportingBackup, setExportingBackup] = useState(false)
+  const [restoringBackup, setRestoringBackup] = useState(false)
+  const [backupError, setBackupError] = useState<string | null>(null)
+  const [backupMessage, setBackupMessage] = useState<string | null>(null)
   const [activeSection, setActiveSection] = useState<SettingsSectionId>('appearance')
   const [expandedSections, setExpandedSections] = useState<Record<SettingsSectionId, boolean>>({
     model: true,
     paths: true,
     appearance: true,
     updates: true,
+    backup: true,
     agent: true,
     'ide-editor': true,
     versions: true,
@@ -55,6 +60,7 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
   })
   const contentRef = useRef<HTMLDivElement | null>(null)
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({})
+  const backupInputRef = useRef<HTMLInputElement | null>(null)
 
   const load = useCallback(async () => {
     try {
@@ -116,6 +122,50 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
       setInstallingUpdate(false)
     }
   }, [runUpdateCheck])
+
+  const runBackupExport = useCallback(async () => {
+    setExportingBackup(true)
+    setBackupError(null)
+    setBackupMessage(null)
+    try {
+      const { blob, filename } = await exportDataBackup()
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = filename
+      document.body.appendChild(anchor)
+      anchor.click()
+      anchor.remove()
+      URL.revokeObjectURL(url)
+      setBackupMessage(t('settings.backup.exportDone'))
+    } catch (e) {
+      setBackupError((e as Error).message)
+    } finally {
+      setExportingBackup(false)
+    }
+  }, [t])
+
+  const runBackupRestore = useCallback(async (file: File | undefined) => {
+    if (!file) return
+    if (!window.confirm(t('settings.backup.restoreConfirm'))) {
+      if (backupInputRef.current) backupInputRef.current.value = ''
+      return
+    }
+    setRestoringBackup(true)
+    setBackupError(null)
+    setBackupMessage(null)
+    try {
+      await restoreDataBackup(file)
+      setBackupMessage(t('settings.backup.restoreDone'))
+      window.dispatchEvent(new CustomEvent('punkdom:settings-updated'))
+      await load()
+    } catch (e) {
+      setBackupError((e as Error).message)
+    } finally {
+      setRestoringBackup(false)
+      if (backupInputRef.current) backupInputRef.current.value = ''
+    }
+  }, [load, t])
 
   const saveDraft = useCallback(async (settings: Settings) => {
     const updater = activeLayer === 'user' ? updateUserSettings : updateWorkspaceSettings
@@ -226,6 +276,23 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
             onInstall={() => void runUpdateInstall()}
           />
         </>
+      ),
+    },
+    {
+      id: 'backup',
+      group: t('settings.group.common'),
+      title: t('settings.section.backup'),
+      children: (
+        <DataBackupPanel
+          exporting={exportingBackup}
+          restoring={restoringBackup}
+          error={backupError}
+          message={backupMessage}
+          inputRef={backupInputRef}
+          onExport={() => void runBackupExport()}
+          onPickRestore={() => backupInputRef.current?.click()}
+          onRestoreFile={(file) => void runBackupRestore(file)}
+        />
       ),
     },
     {
@@ -567,6 +634,72 @@ function Section({
   )
 }
 
+function DataBackupPanel({
+  exporting,
+  restoring,
+  error,
+  message,
+  inputRef,
+  onExport,
+  onPickRestore,
+  onRestoreFile,
+}: {
+  exporting: boolean
+  restoring: boolean
+  error: string | null
+  message: string | null
+  inputRef: RefObject<HTMLInputElement | null>
+  onExport: () => void
+  onPickRestore: () => void
+  onRestoreFile: (file: File | undefined) => void
+}) {
+  const { t } = useTranslation()
+  return (
+    <div className="rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] px-3 py-3">
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+        <div className="min-w-0 space-y-1 text-xs leading-5">
+          <div className="font-medium text-[var(--punkdom-text)]">{t('settings.backup.title')}</div>
+          <div className="text-[var(--punkdom-text-muted)]">{t('settings.backup.description')}</div>
+          <div className="text-[var(--punkdom-text-faint)]">{t('settings.backup.filenameHint')}</div>
+          {message && (
+            <div className="rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-2.5 py-1.5 text-[var(--punkdom-text-muted)]">
+              {message}
+            </div>
+          )}
+          {error && <InlineErrorNotice className="mt-2" message={error} title={t('settings.backup.error')} />}
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={onExport}
+            disabled={exporting || restoring}
+            className="punkdom-nav-item inline-flex items-center gap-1.5 rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] px-2.5 py-1 text-[var(--punkdom-text)] disabled:opacity-50"
+          >
+            {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+            {exporting ? t('settings.backup.exporting') : t('settings.backup.export')}
+          </button>
+          <button
+            type="button"
+            onClick={onPickRestore}
+            disabled={exporting || restoring}
+            className="punkdom-nav-item inline-flex items-center gap-1.5 rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-active)] px-2.5 py-1 text-[var(--punkdom-text)] disabled:opacity-50"
+          >
+            {restoring ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            {restoring ? t('settings.backup.restoring') : t('settings.backup.restore')}
+          </button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept=".zip,application/zip,application/x-zip-compressed"
+            className="hidden"
+            onChange={(event) => onRestoreFile(event.target.files?.[0])}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function UpdatePanel({
   status,
   installResult,
@@ -587,6 +720,7 @@ function UpdatePanel({
   const { t } = useTranslation()
   const releaseDate = status?.published_at ? new Date(status.published_at).toLocaleString() : ''
   const installDisabled = installing || checking || !status?.can_install
+  const isDockerUpdate = Boolean(status?.docker)
   return (
     <div className="rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] px-3 py-3">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -608,6 +742,15 @@ function UpdatePanel({
           {status?.asset && (
             <div className="truncate text-[var(--punkdom-text-faint)]">
               {t('settings.updates.asset', { name: status.asset.name, size: formatBytes(status.asset.size) })}
+            </div>
+          )}
+          {isDockerUpdate && (
+            <div className="space-y-1 rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface)] px-2.5 py-2 text-[var(--punkdom-text-muted)]">
+              <div>{t('settings.updates.dockerHint')}</div>
+              <code className="block overflow-x-auto rounded-[var(--punkdom-radius)] bg-[var(--punkdom-code-bg)] px-2 py-1 font-mono text-[var(--punkdom-code-text)]">
+                {status?.docker_update_command || 'docker compose pull punkdom && docker compose up -d punkdom'}
+              </code>
+              <div className="text-[var(--punkdom-text-faint)]">{t('settings.updates.dockerWatchtower')}</div>
             </div>
           )}
           {installResult?.installed && (
@@ -645,7 +788,7 @@ function UpdatePanel({
             className="punkdom-nav-item inline-flex items-center gap-1.5 rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-active)] px-2.5 py-1 text-[var(--punkdom-text)] disabled:opacity-50"
           >
             <Download className="h-3.5 w-3.5" />
-            {installing ? t('settings.updates.installing') : t('settings.updates.install')}
+            {isDockerUpdate ? t('settings.updates.dockerInstallDisabled') : (installing ? t('settings.updates.installing') : t('settings.updates.install'))}
           </button>
         </div>
       </div>

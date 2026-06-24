@@ -137,7 +137,7 @@ export function TellerEditor({ workspace, draft, setDraft, tagDraft, setTagDraft
           <ScrollArea className="min-h-0 flex-1">
             <div className="p-2">
               {(draft.slots || []).map((slot) => (
-                <div key={slot.id} className={`mb-1 flex min-h-12 w-full items-center gap-2 rounded-md border px-3 py-2 text-xs transition ${activeSlot?.id === slot.id ? 'border-[var(--punkdom-accent)]/45 bg-[var(--punkdom-active)] text-[var(--punkdom-text)] shadow-[inset_3px_0_0_var(--punkdom-accent)]' : 'border-transparent text-[var(--punkdom-text-muted)] hover:border-[var(--punkdom-border)] hover:bg-[var(--punkdom-hover)] hover:text-[var(--punkdom-text)]'}`}>
+                <div key={slot.id} className={`mb-1 grid min-h-12 w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 rounded-md border px-3 py-2 text-xs transition ${activeSlot?.id === slot.id ? 'border-[var(--punkdom-accent)]/45 bg-[var(--punkdom-active)] text-[var(--punkdom-text)] shadow-[inset_3px_0_0_var(--punkdom-accent)]' : 'border-transparent text-[var(--punkdom-text-muted)] hover:border-[var(--punkdom-border)] hover:bg-[var(--punkdom-hover)] hover:text-[var(--punkdom-text)]'}`}>
                   <button type="button" onClick={() => setActiveSlotId(slot.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                     <FileText className="h-3.5 w-3.5 shrink-0 text-[var(--punkdom-text-faint)]" />
                     <span className="min-w-0 flex-1">
@@ -149,7 +149,7 @@ export function TellerEditor({ workspace, draft, setDraft, tagDraft, setTagDraft
                       </span>
                     </span>
                   </button>
-                  <ToggleSwitch checked={slot.enabled} compact onChange={(enabled) => updateSlotById(slot.id, { enabled })} />
+                  <ToggleSwitch checked={slot.enabled} compact className="self-center" onChange={(enabled) => updateSlotById(slot.id, { enabled })} />
                 </div>
               ))}
             </div>
@@ -370,12 +370,15 @@ function EmptyState({ title, description }: { title: string; description: string
   )
 }
 
-function ToggleSwitch({ checked, onChange, compact = false }: { checked: boolean; onChange: (checked: boolean) => void; compact?: boolean }) {
+function ToggleSwitch({ checked, onChange, compact = false, className = '' }: { checked: boolean; onChange: (checked: boolean) => void; compact?: boolean; className?: string }) {
   const { t } = useTranslation()
   const label = checked ? t('settingPanel.switch.disableRule') : t('settingPanel.switch.enableRule')
+  const trackSize = compact ? 'h-5 w-9 p-0.5' : 'h-6 w-11 p-0.5'
+  const thumbSize = compact ? 'h-4 w-4' : 'h-5 w-5'
+  const thumbPosition = checked ? (compact ? 'translate-x-4' : 'translate-x-5') : 'translate-x-0'
   return (
-    <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} title={label} className={`relative shrink-0 rounded-full border transition ${checked ? 'border-[var(--punkdom-accent-green)]/60 bg-[var(--punkdom-accent-green)]/25' : 'border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)]'} ${compact ? 'h-5 w-9' : 'h-6 w-11'}`}>
-      <span className={`absolute rounded-full bg-[var(--punkdom-text)] shadow transition ${compact ? `top-0.5 h-4 w-4 ${checked ? 'left-[18px]' : 'left-0.5'}` : `top-0.5 h-5 w-5 ${checked ? 'left-[22px]' : 'left-0.5'}`}`} />
+    <button type="button" role="switch" aria-checked={checked} onClick={() => onChange(!checked)} title={label} className={`inline-flex shrink-0 items-center rounded-full border transition ${trackSize} ${checked ? 'border-[var(--punkdom-accent-green)]/60 bg-[var(--punkdom-accent-green)]/25' : 'border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)]'} ${className}`}>
+      <span className={`block rounded-full bg-[var(--punkdom-text)] shadow transition-transform ${thumbSize} ${thumbPosition}`} />
       <span className="sr-only">{label}</span>
     </button>
   )
