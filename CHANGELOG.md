@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+- 优化模型配置设置，在 Base URL 失去焦点及测试时自动规范化本地或外部地址（自动补全协议及 /v1 后缀）。
+- 新增模型配置“测试连接”功能，通过后端发送轻量级 ping 请求进行验证，并配置 20 秒超时机制避免前端无限挂起。
+- 重构上下文长度配置为范围滑块（Slider）交互形式，支持 64k, 128k, 256k, 1M 预设，并为自定义输入自动附带 k（千 tokens）单位。
+
 ## [v0.1.3] - 2026-06-25
 
 - Changed the Punkdom wordmark icon from `Swords` to the Lucide `Stone` icon.

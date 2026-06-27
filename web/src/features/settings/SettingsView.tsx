@@ -3,7 +3,7 @@ import type { ReactNode, RefObject } from 'react'
 import { ChevronDown, ChevronUp, Download, ExternalLink, Loader2, Plus, RefreshCw, Save, Settings as SettingsIcon, Trash2, Upload, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import type { LayeredSettings, ModelProfileSettings, Settings, SettingsLayer, UpdateCheckResult, UpdateInstallResult } from './types'
-import { checkForUpdate, exportDataBackup, fetchSettings, installUpdate, restoreDataBackup, updateUserSettings, updateWorkspaceSettings } from './api'
+import { checkForUpdate, exportDataBackup, fetchSettings, installUpdate, restoreDataBackup, updateUserSettings, updateWorkspaceSettings, testModelConfig } from './api'
 import { FONT_OPTIONS, fontLabelKeyFor } from './font-options'
 import { settingsForLayer, useAutoSaveSettings } from './use-auto-save-settings'
 import { getInteractiveTellers } from '@/features/interactive/api'
@@ -27,7 +27,6 @@ const iconButtonCls = 'punkdom-nav-item rounded-[var(--punkdom-radius)] text-[va
 const DEFAULT_CONTEXT_WINDOW_TOKENS = 400000
 const MIN_CONTEXT_WINDOW_TOKENS = 1024
 const MAX_CONTEXT_WINDOW_TOKENS = 2000000
-const CONTEXT_WINDOW_PRESETS = [200000, DEFAULT_CONTEXT_WINDOW_TOKENS, 1000000]
 
 export function SettingsView({ onClose }: { onClose?: () => void }) {
   const { t } = useTranslation()
@@ -46,6 +45,8 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
   const [restoringBackup, setRestoringBackup] = useState(false)
   const [backupError, setBackupError] = useState<string | null>(null)
   const [backupMessage, setBackupMessage] = useState<string | null>(null)
+  const [testingModel, setTestingModel] = useState(false)
+  const [testResult, setTestResult] = useState<{ success: boolean; message?: string; error?: string } | null>(null)
   const [activeSection, setActiveSection] = useState<SettingsSectionId>('appearance')
   const [expandedSections, setExpandedSections] = useState<Record<SettingsSectionId, boolean>>({
     model: true,
@@ -193,6 +194,28 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
     }
   }
 
+  const handleTestModel = async () => {
+    setTestingModel(true)
+    setTestResult(null)
+    const rawUrl = draft.openai_base_url ?? effective.openai_base_url ?? ''
+    const convertedUrl = autoConvertBaseURL(rawUrl)
+    if (draft.openai_base_url && convertedUrl !== draft.openai_base_url) {
+      setField('openai_base_url', convertedUrl)
+    }
+    try {
+      const res = await testModelConfig({
+        openai_api_key: draft.openai_api_key ?? effective.openai_api_key ?? '',
+        openai_base_url: convertedUrl,
+        openai_model: draft.openai_model ?? effective.openai_model ?? '',
+      })
+      setTestResult(res)
+    } catch (e) {
+      setTestResult({ success: false, error: (e as Error).message })
+    } finally {
+      setTestingModel(false)
+    }
+  }
+
   const setField = <K extends keyof Settings>(k: K, v: Settings[K]) =>
     setDraft((d) => ({ ...d, [k]: v }))
 
@@ -304,9 +327,47 @@ export function SettingsView({ onClose }: { onClose?: () => void }) {
           <Text label="API Key" value={draft.openai_api_key} placeholder={placeholderFor('openai_api_key')}
                 onChange={(v) => setField('openai_api_key', v)} type="password" />
           <Text label="Base URL" value={draft.openai_base_url} placeholder={placeholderFor('openai_base_url')}
-                onChange={(v) => setField('openai_base_url', v)} />
+                onChange={(v) => setField('openai_base_url', v)}
+                onBlur={() => {
+                  if (draft.openai_base_url) {
+                    const converted = autoConvertBaseURL(draft.openai_base_url)
+                    if (converted !== draft.openai_base_url) {
+                      setField('openai_base_url', converted)
+                    }
+                  }
+                }} />
           <Text label={t('common.model')} value={draft.openai_model} placeholder={placeholderFor('openai_model')}
                 onChange={(v) => setField('openai_model', v)} />
+          <div className="punkdom-settings-row flex flex-col gap-1.5 rounded-md px-2 py-1.5 sm:flex-row sm:items-center sm:gap-3">
+            <span className="w-44 shrink-0"></span>
+            <div className="flex flex-col gap-2 min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={testingModel || !(draft.openai_base_url ?? effective.openai_base_url) || !(draft.openai_model ?? effective.openai_model)}
+                  onClick={handleTestModel}
+                  className="flex h-8 items-center gap-1.5 rounded-md bg-[var(--punkdom-primary)] px-3 text-xs font-medium text-white hover:bg-[var(--punkdom-primary-hover)] disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {testingModel ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {t('settings.model.testing')}
+                    </>
+                  ) : (
+                    t('settings.model.testConnection')
+                  )}
+                </button>
+              </div>
+              {testResult && (
+                <div className={`text-xs rounded border p-2 ${testResult.success ? 'bg-green-500/10 border-green-500/20 text-green-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                  {testResult.success 
+                    ? t('settings.model.testSuccess', { message: testResult.message }) 
+                    : t('settings.model.testFailed', { error: testResult.error })
+                  }
+                </div>
+              )}
+            </div>
+          </div>
           <ContextWindowField
             label={t('settings.model.contextWindow')}
             value={draft.openai_context_window_tokens ?? null}
@@ -832,9 +893,10 @@ function ReadOnly({ label, value }: { label: string; value?: string }) {
   )
 }
 
-function Text({ label, value, placeholder, type = 'text', disabled, onChange }: {
+function Text({ label, value, placeholder, type = 'text', disabled, onChange, onBlur }: {
   label: string; value?: string; placeholder?: string; type?: string; disabled?: boolean
   onChange: (v: string) => void
+  onBlur?: () => void
 }) {
   return (
     <FieldRow label={label}>
@@ -844,6 +906,7 @@ function Text({ label, value, placeholder, type = 'text', disabled, onChange }: 
         placeholder={placeholder}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
         className={`${fieldCls} disabled:opacity-50`}
       />
     </FieldRow>
@@ -1092,6 +1155,14 @@ function ModelProfilesEditor({ profiles, effectiveProfiles, onChange }: {
               value={profile.openai_base_url ?? ''}
               placeholder={t('common.baseUrl')}
               onChange={(e) => updateProfile(index, { openai_base_url: e.target.value })}
+              onBlur={() => {
+                if (profile.openai_base_url) {
+                  const converted = autoConvertBaseURL(profile.openai_base_url)
+                  if (converted !== profile.openai_base_url) {
+                    updateProfile(index, { openai_base_url: converted })
+                  }
+                }
+              }}
               className={fieldCls}
             />
             <input
@@ -1158,9 +1229,9 @@ function ContextWindowField({ label, value, effective, allowInherit, onChange }:
   onChange: (value: number | null) => void
 }) {
   return (
-    <FieldRow label={label}>
+    <ValueRow label={label}>
       <ContextWindowInput value={value} effective={effective} allowInherit={allowInherit} onChange={onChange} />
-    </FieldRow>
+    </ValueRow>
   )
 }
 
@@ -1171,89 +1242,156 @@ function ContextWindowInput({ value, effective, allowInherit = false, onChange }
   onChange: (value: number | null) => void
 }) {
   const { t } = useTranslation()
-  const [customDraft, setCustomDraft] = useState<string | null>(null)
-  const selectedValue = value ?? DEFAULT_CONTEXT_WINDOW_TOKENS
-  const customEditing = customDraft !== null
-  const preset = value === null && allowInherit && !customEditing
-    ? ''
-    : (!customEditing && CONTEXT_WINDOW_PRESETS.includes(selectedValue) ? String(selectedValue) : 'custom')
-  const custom = preset === 'custom'
+  const presets = [64000, 128000, 256000, 1000000]
+  const presetLabels = ['64k', '128k', '256k', '1M']
+
   const inheritedValue = effective ?? DEFAULT_CONTEXT_WINDOW_TOKENS
-  const customValue = customDraft ?? (value === null ? '' : String(value))
+  const isInherited = value === null && allowInherit
+
+  // Current active value (falls back to effective if inherited)
+  const activeValue = value !== null ? value : inheritedValue
+
+  // Determine active slider index (0: 64k, 1: 128k, 2: 256k, 3: 1M, 4: Custom)
+  const getSliderIndex = (val: number) => {
+    const idx = presets.indexOf(val)
+    return idx !== -1 ? idx : 4
+  }
+
+  const sliderIndex = getSliderIndex(activeValue)
+
+  // Handle slider change
+  const handleSliderChange = (index: number) => {
+    if (index < 4) {
+      onChange(presets[index])
+    } else {
+      onChange(activeValue)
+    }
+  }
+
+  // Handle custom numeric change (input unit is K)
+  const handleCustomChange = (kVal: string) => {
+    if (kVal.trim() === '') {
+      onChange(64000) // fallback to 64k
+      return
+    }
+    const num = Number(kVal)
+    if (Number.isFinite(num)) {
+      const tokens = Math.trunc(num * 1000)
+      const bounded = Math.min(Math.max(tokens, MIN_CONTEXT_WINDOW_TOKENS), MAX_CONTEXT_WINDOW_TOKENS)
+      onChange(bounded)
+    }
+  }
+
+  const customKValue = Math.round(activeValue / 1000)
+
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">
-      <select
-        value={preset}
-        onChange={(e) => {
-          if (e.target.value === '') {
-            setCustomDraft(null)
-            onChange(null)
-            return
-          }
-          if (e.target.value === 'custom') {
-            setCustomDraft(value === null ? '' : String(value))
-            return
-          }
-          setCustomDraft(null)
-          onChange(Number(e.target.value))
-        }}
-        className={fieldCls}
-        aria-label={t('settings.model.contextWindow')}
-        title={t('settings.model.contextWindow')}
-      >
-        {allowInherit && (
-          <option value="">{t('common.inherit', { value: formatContextWindow(inheritedValue) })}</option>
-        )}
-        <option value="200000">{t('settings.model.contextWindow200k')}</option>
-        <option value={String(DEFAULT_CONTEXT_WINDOW_TOKENS)}>{t('settings.model.contextWindow400k')}</option>
-        <option value="1000000">{t('settings.model.contextWindow1m')}</option>
-        <option value="custom">{t('settings.model.contextWindowCustom')}</option>
-      </select>
-      {custom && (
-        <input
-          type="number"
-          min={MIN_CONTEXT_WINDOW_TOKENS}
-          max={MAX_CONTEXT_WINDOW_TOKENS}
-          step={1000}
-          value={customValue}
-          placeholder={t('settings.model.contextWindowPlaceholder')}
-          onBlur={() => {
-            if (customDraft === null) return
-            const normalized = normalizeContextWindowDraft(customDraft)
-            setCustomDraft(normalized)
-            if (normalized === '') {
-              onChange(null)
-            } else {
-              const numeric = Number(normalized)
-              if (Number.isFinite(numeric)) onChange(numeric)
-            }
-          }}
-          onChange={(e) => {
-            const raw = e.target.value
-            setCustomDraft(raw)
-            if (raw.trim() === '') return
-            const numeric = Number(raw)
-            if (Number.isFinite(numeric) && numeric >= MIN_CONTEXT_WINDOW_TOKENS && numeric <= MAX_CONTEXT_WINDOW_TOKENS) {
-              onChange(Math.trunc(numeric))
-            }
-          }}
-          className={`${fieldCls} sm:max-w-40`}
-        />
+    <div className="flex min-w-0 flex-1 flex-col gap-3">
+      {/* Inherit checkbox */}
+      {allowInherit && (
+        <label className="flex items-center gap-2 text-xs text-[var(--punkdom-text-muted)] cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isInherited}
+            onChange={(e) => {
+              if (e.target.checked) {
+                onChange(null)
+              } else {
+                onChange(inheritedValue)
+              }
+            }}
+            className="rounded border-[var(--punkdom-border)] bg-[var(--punkdom-surface-3)]"
+          />
+          <span>{t('common.inherit', { value: formatContextWindow(inheritedValue) })}</span>
+        </label>
       )}
+
+      {/* Slider + Custom Control */}
+      <div className={`flex flex-col gap-3 ${isInherited ? 'opacity-40 pointer-events-none' : ''}`}>
+        <div className="flex flex-col gap-1.5">
+          <input
+            type="range"
+            min="0"
+            max="4"
+            step="1"
+            value={sliderIndex}
+            onChange={(e) => handleSliderChange(Number(e.target.value))}
+            className="h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-[var(--punkdom-surface-3)] accent-[var(--punkdom-primary)]"
+            disabled={isInherited}
+          />
+          {/* Slider Tick Labels */}
+          <div className="flex justify-between px-1 text-[10px] text-[var(--punkdom-text-muted)] select-none">
+            {presetLabels.map((lbl, idx) => (
+              <span
+                key={idx}
+                className={`cursor-pointer ${sliderIndex === idx ? 'text-[var(--punkdom-primary)] font-semibold' : ''}`}
+                onClick={() => !isInherited && handleSliderChange(idx)}
+              >
+                {lbl}
+              </span>
+            ))}
+            <span
+              className={`cursor-pointer ${sliderIndex === 4 ? 'text-[var(--punkdom-primary)] font-semibold' : ''}`}
+              onClick={() => !isInherited && handleSliderChange(4)}
+            >
+              {t('settings.model.contextWindowCustom')}
+            </span>
+          </div>
+        </div>
+
+        {/* Custom Input (Only shown if index is 4) */}
+        {sliderIndex === 4 && (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={Math.round(MIN_CONTEXT_WINDOW_TOKENS / 1000)}
+              max={Math.round(MAX_CONTEXT_WINDOW_TOKENS / 1000)}
+              value={customKValue}
+              onChange={(e) => handleCustomChange(e.target.value)}
+              disabled={isInherited}
+              className={`${fieldCls} max-w-24 text-right`}
+              placeholder={t('settings.model.contextWindowPlaceholder')}
+            />
+            <span className="text-xs text-[var(--punkdom-text-muted)] font-medium">k</span>
+          </div>
+        )}
+      </div>
     </div>
   )
-}
-
-function normalizeContextWindowDraft(value: string) {
-  const trimmed = value.trim()
-  if (trimmed === '') return ''
-  const numeric = Number(trimmed)
-  if (!Number.isFinite(numeric)) return trimmed
-  return String(Math.min(Math.max(Math.trunc(numeric), MIN_CONTEXT_WINDOW_TOKENS), MAX_CONTEXT_WINDOW_TOKENS))
 }
 
 function formatContextWindow(value: number) {
   if (value >= 1000000 && value % 1000000 === 0) return `${value / 1000000}M`
   if (value >= 1000 && value % 1000 === 0) return `${value / 1000}K`
   return String(value)
+}
+
+function autoConvertBaseURL(url: string): string {
+  let val = url.trim()
+  if (!val) return ''
+
+  if (!/^https?:\/\//i.test(val)) {
+    const isLocal = /localhost|127\.0\.0\.1|0\.0\.0\.0|192\.168\./i.test(val)
+    if (isLocal) {
+      val = 'http://' + val
+    } else {
+      val = 'https://' + val
+    }
+  }
+
+  try {
+    const urlObj = new URL(val)
+    if (urlObj.hostname === 'api.deepseek.com' && (urlObj.pathname === '/' || urlObj.pathname === '')) {
+      return 'https://api.deepseek.com'
+    }
+    if (urlObj.pathname === '/' || urlObj.pathname === '') {
+      urlObj.pathname = '/v1'
+    }
+    let result = urlObj.toString()
+    if (result.endsWith('/')) {
+      result = result.slice(0, -1)
+    }
+    return result
+  } catch (e) {
+    return val
+  }
 }

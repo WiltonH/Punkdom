@@ -52,3 +52,15 @@ function filenameFromDisposition(disposition: string) {
   const ascii = disposition.match(/filename="?([^"]+)"?/i)
   return ascii?.[1] ? ascii[1] : ''
 }
+
+export async function testModelConfig(params: {
+  openai_api_key: string
+  openai_base_url: string
+  openai_model: string
+}): Promise<{ success: boolean; message?: string; error?: string }> {
+  return requestJSON('/api/settings/test-model', {
+    method: 'POST',
+    headers: jsonHeaders,
+    body: JSON.stringify(params),
+  })
+}

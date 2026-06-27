@@ -121,6 +121,12 @@ export const handlers = [
       chapters: [],
     }),
   ),
+  http.post('/api/settings/test-model', () =>
+    HttpResponse.json({
+      success: true,
+      message: 'pong',
+    }),
+  ),
   http.get('/api/settings', () =>
     HttpResponse.json({
       default: {},
