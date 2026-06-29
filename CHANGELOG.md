@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- Added multi-arch Docker image build and push to GitHub Container Registry (`ghcr.io/wiltonh/punkdom`) on tagged releases.
+- Added `Dockerfile`, `.dockerignore`, and `deploy/docker-compose.yml` with Watchtower auto-update support.
+
 ## [v0.1.3] - 2026-06-25
 
 - Changed the Punkdom wordmark icon from `Swords` to the Lucide `Stone` icon.
