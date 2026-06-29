@@ -2,8 +2,14 @@
 
 ## [Unreleased]
 
+## [v0.1.4] - 2026-06-29
+
 - Added multi-arch Docker image build and push to GitHub Container Registry (`ghcr.io/wiltonh/punkdom`) on tagged releases.
 - Added `Dockerfile`, `.dockerignore`, and `deploy/docker-compose.yml` with Watchtower auto-update support.
+- Changed the default model from `deepseek-v4-pro` to `deepseek-v4-flash`.
+- Changed the sample frontend port in `config.toml` back to Vite's default `5173`.
+- Added a first-run welcome page with an animated ASCII tesseract and Punkdom wordmark.
+- Made the Punkdom top-bar logo reopen the welcome page during the current browser session.
 
 ## [v0.1.3] - 2026-06-25
 

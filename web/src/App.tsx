@@ -9,12 +9,13 @@ import { CommandPalette } from '@/components/common/command-palette'
 import { useWorkspace } from '@/hooks/useWorkspace'
 import { useChat } from '@/hooks/useChat'
 import { useWorkspaceHotkeys } from '@/hooks/use-workspace-hotkeys'
-import { useWorkspaceStore, type RightPanel, type WorkspaceMode } from '@/stores/workspace-store'
+import { WELCOME_DISMISSED_KEY, useWorkspaceStore, type RightPanel, type WorkspaceMode } from '@/stores/workspace-store'
 import { useInteractiveStore } from '@/features/interactive/stores/interactive-store'
 import type { ChapterSummary } from '@/lib/api'
 import { toast } from 'sonner'
 import { setConfiguredLocale } from '@/i18n'
 import { PunkdomMotionProvider, normalizeMotionIntensity } from '@/features/motion/motion-preferences'
+import { WelcomePage } from '@/features/welcome'
 import {
   dedupeTabs,
   enforceTabLimit,
@@ -88,6 +89,8 @@ function App() {
   const setRightPanel = useWorkspaceStore((state) => state.setRightPanel)
   const setCommandOpen = useWorkspaceStore((state) => state.setCommandOpen)
   const setMode = useWorkspaceStore((state) => state.setMode)
+  const showWelcome = useWorkspaceStore((state) => state.showWelcome)
+  const setShowWelcome = useWorkspaceStore((state) => state.setShowWelcome)
   const setSelectedChapterId = useWorkspaceStore((state) => state.setSelectedChapterId)
 
   useEffect(() => {
@@ -648,7 +651,12 @@ function App() {
         onStyleReferenceAdd={addStyleReference}
         onStyleReferenceRemove={removeStyleReference}
         onTextSelectionRemove={removeTextSelection}
+        onLogoClick={() => {
+          window.sessionStorage.removeItem(WELCOME_DISMISSED_KEY)
+          setShowWelcome(true)
+        }}
       />
+      {showWelcome && <WelcomePage />}
       <CommandPalette
         open={commandOpen}
         isStreaming={isStreaming}

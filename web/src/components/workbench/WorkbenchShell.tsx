@@ -43,6 +43,7 @@ interface WorkbenchShellProps {
   onSetRightPanel: (panel: RightPanel) => void
   onToggleSettings: () => void
   onCloseSettings: () => void
+  onLogoClick?: () => void
 }
 
 type ActivityItemId = 'writing' | 'story' | 'timeline' | 'memory' | 'lore' | 'teller' | 'versions' | 'books' | 'skills' | 'agents' | 'automations'
@@ -104,6 +105,7 @@ export function WorkbenchShell({
   onSetRightPanel,
   onToggleSettings,
   onCloseSettings,
+  onLogoClick,
 }: WorkbenchShellProps) {
   const { t, i18n } = useTranslation()
   const isMobile = useIsMobile()
@@ -374,7 +376,7 @@ export function WorkbenchShell({
   const topBar = (
     <header className="punkdom-topbar grid h-10 shrink-0 grid-cols-[auto_1fr_auto] items-center border-b px-3 text-xs">
       <div className="flex items-center gap-3">
-        <PunkdomBrand />
+        <PunkdomBrand onClick={onLogoClick} />
         <LayoutGroup id="workbench-mode-switch">
         <div className="flex h-7 items-center rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-0.5" aria-label={t('workbench.modeSwitch')}>
           <button
@@ -487,7 +489,7 @@ export function WorkbenchShell({
     const mobileTopBar = (
       <header className="punkdom-mobile-topbar punkdom-topbar shrink-0 border-b border-[var(--punkdom-border)] px-3 py-2">
         <div className="flex min-w-0 items-center gap-1">
-          <PunkdomBrand />
+          <PunkdomBrand onClick={onLogoClick} />
           <LayoutGroup id="workbench-mobile-mode-switch">
             <div className="flex h-8 shrink-0 items-center rounded-[var(--punkdom-radius)] border border-[var(--punkdom-border)] bg-[var(--punkdom-surface-2)] p-0.5" aria-label={t('workbench.modeSwitch')}>
               <button
@@ -595,12 +597,17 @@ export function WorkbenchShell({
   )
 }
 
-function PunkdomBrand() {
+function PunkdomBrand({ onClick }: { onClick?: () => void }) {
   return (
-    <div className="flex shrink-0 items-center gap-1.5 font-semibold text-[var(--punkdom-text)]" aria-label="Punkdom">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex shrink-0 items-center gap-1.5 font-semibold text-[var(--punkdom-text)] hover:opacity-80 transition-opacity cursor-pointer"
+      aria-label="Punkdom"
+    >
       <Stone aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--punkdom-text)]" strokeWidth={2} />
-      <span>Punkdom</span>
-    </div>
+      <span className="font-bold">Punkdom</span>
+    </button>
   )
 }
 

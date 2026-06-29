@@ -108,6 +108,7 @@ interface ModeRouterProps {
   onStyleReferenceAdd: (path: string) => void
   onStyleReferenceRemove: (path: string) => void
   onTextSelectionRemove: (index: number) => void
+  onLogoClick?: () => void
 }
 
 export function ModeRouter(props: ModeRouterProps) {
@@ -192,6 +193,7 @@ export function ModeRouter(props: ModeRouterProps) {
     onStyleReferenceAdd,
     onStyleReferenceRemove,
     onTextSelectionRemove,
+    onLogoClick,
   } = props
 
   const activeTab = openTabs.find((tab) => tabKey(tab) === activeTabKey) ?? null
@@ -582,6 +584,7 @@ export function ModeRouter(props: ModeRouterProps) {
       onSetRightPanel={onSetRightPanel}
       onToggleSettings={onToggleSettings}
       onCloseSettings={onCloseSettings}
+      onLogoClick={onLogoClick}
     />
   )
 }

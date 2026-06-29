@@ -86,6 +86,11 @@ Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
   value: () => {},
 })
 
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  configurable: true,
+  value: () => null,
+})
+
 beforeAll(async () => {
   const { setConfiguredLocale } = await import('@/i18n')
   setConfiguredLocale('zh-CN')

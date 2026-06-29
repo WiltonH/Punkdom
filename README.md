@@ -4,6 +4,15 @@ Punkdom v0.1 是一个本地优先的 AI 创作工作台，用于小说、互动
 
 v0.1 提供写作模式、互动模式、设定集、创作 Agent、技能点、智能体配置、自动化、版本管理、项目仓库、文本导入、角色卡导入、设置和本地 workspace 管理。
 
+## v0.1.4 更新
+
+- 新增首次进入欢迎页，使用 ASCII 超立方体动画和 Punkdom 字标作为启动视觉。
+- 点击工作台左上角 Punkdom Logo 可在当前浏览器会话内重新打开欢迎页；按 Esc 或点击欢迎页进入工作台。
+- 新增 GitHub Release 打 tag 时自动构建并推送多架构 Docker 镜像到 `ghcr.io/wiltonh/punkdom`。
+- 新增 `Dockerfile`、`.dockerignore` 和 `deploy/docker-compose.yml`，支持 Docker 部署和 Watchtower 自动更新。
+- 默认模型从 `deepseek-v4-pro` 调整为 `deepseek-v4-flash`。
+- `config.toml` 示例前端端口改回 Vite 默认的 `5173`，与本地开发启动方式一致。
+
 ## v0.1.3 更新
 
 - 品牌标识调整为 `Stone` 图标，并继续保持极简 IDE 风格。
@@ -62,7 +71,7 @@ Punkdom 使用 OpenAI 兼容接口，可通过环境变量快速配置：
 ```bash
 export OPENAI_API_KEY="your-api-key"
 export OPENAI_BASE_URL="https://api.deepseek.com"
-export OPENAI_MODEL="deepseek-v4-pro"
+export OPENAI_MODEL="deepseek-v4-flash"
 ```
 
 常用 Punkdom 环境变量：
@@ -77,6 +86,21 @@ export PUNKDOM_FRONTEND_PORT="5173"
 ```
 
 配置文件使用 `punkdom_dir` 指定 Punkdom 数据目录。用户级和工作区级配置会忽略该启动级定位参数。
+
+## Docker
+
+发布版本会推送多架构镜像到 GitHub Container Registry：
+
+```bash
+docker pull ghcr.io/wiltonh/punkdom:latest
+docker run --rm -p 8080:8080 -v punkdom-data:/data ghcr.io/wiltonh/punkdom:latest
+```
+
+也可以使用仓库内的 Compose 配置：
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d
+```
 
 ## Themes
 

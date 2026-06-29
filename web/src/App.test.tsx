@@ -122,7 +122,8 @@ describe('App', () => {
   beforeEach(async () => {
     await i18next.changeLanguage('zh-CN')
     window.localStorage.clear()
-    useWorkspaceStore.setState({ mode: 'ide', rightPanel: 'ai', commandOpen: false })
+    window.sessionStorage.clear()
+    useWorkspaceStore.setState({ mode: 'ide', rightPanel: 'ai', commandOpen: false, showWelcome: true })
     mockApiFetch()
   })
 
@@ -179,6 +180,30 @@ describe('App', () => {
     expect(header).not.toBeNull()
     expect(within(header as HTMLElement).getByRole('button', { name: '写作模式' })).toBeInTheDocument()
     expect(within(header as HTMLElement).getByRole('button', { name: '互动模式' })).toBeInTheDocument()
+  })
+
+  it('shows the welcome page first and reopens it from the logo', async () => {
+    const user = userEvent.setup()
+    render(
+      <TooltipProvider>
+        <App />
+      </TooltipProvider>,
+    )
+
+    const welcome = await screen.findByRole('button', { name: 'Enter Punkdom' })
+    expect(welcome).toBeInTheDocument()
+    expect(window.sessionStorage.getItem('punkdom:welcome-dismissed')).toBeNull()
+
+    await user.click(welcome)
+    expect(screen.queryByRole('button', { name: 'Enter Punkdom' })).not.toBeInTheDocument()
+    expect(window.sessionStorage.getItem('punkdom:welcome-dismissed')).toBe('true')
+
+    const header = screen.getByText('Punkdom').closest('header')
+    expect(header).not.toBeNull()
+    await user.click(within(header as HTMLElement).getByRole('button', { name: 'Punkdom' }))
+
+    expect(await screen.findByRole('button', { name: 'Enter Punkdom' })).toBeInTheDocument()
+    expect(window.sessionStorage.getItem('punkdom:welcome-dismissed')).toBeNull()
   })
 
   it('shows the effective active model in the status bar', async () => {

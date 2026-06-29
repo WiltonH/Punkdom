@@ -4,6 +4,15 @@ Punkdom v0.1 is a local-first AI creative workspace for novels, interactive stor
 
 v0.1 includes Writing Mode, Interactive Mode, premise management, creative Agents, Skills, agent configuration, automations, version management, Projects, text import, character-card import, settings, and local workspace management.
 
+## v0.1.4 Update
+
+- Added a first-run welcome page with an animated ASCII tesseract and Punkdom wordmark.
+- Made the top-left Punkdom logo reopen the welcome page in the current browser session; press Esc or click the welcome page to enter the workbench.
+- Added tagged-release automation that builds and pushes multi-arch Docker images to `ghcr.io/wiltonh/punkdom`.
+- Added `Dockerfile`, `.dockerignore`, and `deploy/docker-compose.yml` for Docker deployment with optional Watchtower auto-updates.
+- Changed the default model from `deepseek-v4-pro` to `deepseek-v4-flash`.
+- Changed the sample frontend port in `config.toml` back to Vite's default `5173`.
+
 ## v0.1.3 Update
 
 - Changed the brand mark to the Lucide `Stone` icon while keeping the minimal IDE-style shell.
@@ -62,7 +71,7 @@ Punkdom uses an OpenAI-compatible API:
 ```bash
 export OPENAI_API_KEY="your-api-key"
 export OPENAI_BASE_URL="https://api.deepseek.com"
-export OPENAI_MODEL="deepseek-v4-pro"
+export OPENAI_MODEL="deepseek-v4-flash"
 ```
 
 Common Punkdom environment variables:
@@ -77,6 +86,21 @@ export PUNKDOM_FRONTEND_PORT="5173"
 ```
 
 Use `punkdom_dir` in `config.toml` for the startup-level Punkdom data directory. User-level and workspace-level settings ignore this locator field.
+
+## Docker
+
+Tagged releases publish multi-arch images to GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/wiltonh/punkdom:latest
+docker run --rm -p 8080:8080 -v punkdom-data:/data ghcr.io/wiltonh/punkdom:latest
+```
+
+You can also use the included Compose file:
+
+```bash
+docker compose -f deploy/docker-compose.yml up -d
+```
 
 ## Themes
 

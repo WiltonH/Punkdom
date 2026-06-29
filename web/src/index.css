@@ -966,6 +966,21 @@ html[data-punkdom-motion="off"] *::after {
   text-shadow: 0 0 14px color-mix(in srgb, currentColor 22%, transparent);
 }
 
+.punkdom-ascii-logo-char {
+  animation: punkdom-ascii-logo-breathe 3.8s ease-in-out infinite alternate;
+  opacity: var(--punkdom-logo-alpha-min);
+}
+
+@keyframes punkdom-ascii-logo-breathe {
+  from {
+    opacity: var(--punkdom-logo-alpha-min);
+  }
+
+  to {
+    opacity: var(--punkdom-logo-alpha-max);
+  }
+}
+
 [data-sonner-toast][data-styled='true'] {
   padding-right: 2.35rem;
 }
