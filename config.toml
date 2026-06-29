@@ -12,7 +12,7 @@
 # 模型
 openai_api_key = ""
 openai_base_url = "https://api.deepseek.com"
-openai_model = "deepseek-v4-pro"
+openai_model = "deepseek-v4-flash"
 
 # 可选：配置多个 OpenAI 协议兼容平台，并按 Agent 分配。
 # 不配置 temperature 时使用平台/模型默认值。
