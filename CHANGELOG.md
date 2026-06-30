@@ -10,6 +10,7 @@
 - Changed the sample frontend port in `config.toml` back to Vite's default `5173`.
 - Added a first-run welcome page with an animated ASCII tesseract and Punkdom wordmark.
 - Made the Punkdom top-bar logo reopen the welcome page during the current browser session.
+- Improved the welcome tesseract rendering with muted theme text colors and support for hex or RGB CSS color values.
 
 ## [v0.1.3] - 2026-06-25
 

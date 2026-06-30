@@ -32,7 +32,7 @@ function getThemeColors() {
   const styles = getComputedStyle(document.documentElement)
   return {
     bg: readCSSColor(styles, '--punkdom-bg', '#1a1a1a'),
-    text: readCSSColor(styles, '--punkdom-text', '#ffffff'),
+    text: readCSSColor(styles, '--punkdom-text-muted', '#a3a3a3'),
     accent: readCSSColor(styles, '--punkdom-accent', '#a8adb7'),
   }
 }
@@ -103,10 +103,39 @@ function drawAsciiLine(
   }
 }
 
-function hexToRGB(h: string): [number, number, number] {
-  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h)
-  if (!m) return [255, 255, 255]
-  return [parseInt(m[1], 16), parseInt(m[2], 16), parseInt(m[3], 16)]
+function colorToRGB(color: string, fallback: [number, number, number]): [number, number, number] {
+  const hex = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+  if (hex) {
+    const value = hex[1]
+    if (value.length === 3) {
+      return [
+        parseInt(value[0] + value[0], 16),
+        parseInt(value[1] + value[1], 16),
+        parseInt(value[2] + value[2], 16),
+      ]
+    }
+    return [
+      parseInt(value.slice(0, 2), 16),
+      parseInt(value.slice(2, 4), 16),
+      parseInt(value.slice(4, 6), 16),
+    ]
+  }
+
+  const rgb = color.match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/i)
+  if (rgb) {
+    return [
+      clampColorChannel(Number(rgb[1])),
+      clampColorChannel(Number(rgb[2])),
+      clampColorChannel(Number(rgb[3])),
+    ]
+  }
+
+  return fallback
+}
+
+function clampColorChannel(value: number) {
+  if (!Number.isFinite(value)) return 0
+  return Math.max(0, Math.min(255, Math.round(value)))
 }
 
 export function HyperCube() {
@@ -201,8 +230,8 @@ export function HyperCube() {
       const dMax = depths.length > 0 ? Math.max(...depths) : 10
       const dMin = depths.length > 0 ? Math.min(...depths) : -10
 
-      const fg = hexToRGB(colors.text)
-      const accent = hexToRGB(colors.accent)
+      const fg = colorToRGB(colors.text, [83, 96, 113])
+      const accent = colorToRGB(colors.accent, [168, 173, 183])
 
       for (let row = 0; row < gridRows; row++) {
         for (let col = 0; col < gridCols; col++) {

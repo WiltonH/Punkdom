@@ -8,6 +8,7 @@ v0.1 提供写作模式、互动模式、设定集、创作 Agent、技能点、
 
 - 新增首次进入欢迎页，使用 ASCII 超立方体动画和 Punkdom 字标作为启动视觉。
 - 点击工作台左上角 Punkdom Logo 可在当前浏览器会话内重新打开欢迎页；按 Esc 或点击欢迎页进入工作台。
+- 欢迎页超立方体改用主题弱化文字色，并兼容十六进制和 RGB CSS 颜色值。
 - 新增 GitHub Release 打 tag 时自动构建并推送多架构 Docker 镜像到 `ghcr.io/wiltonh/punkdom`。
 - 新增 `Dockerfile`、`.dockerignore` 和 `deploy/docker-compose.yml`，支持 Docker 部署和 Watchtower 自动更新。
 - 默认模型从 `deepseek-v4-pro` 调整为 `deepseek-v4-flash`。

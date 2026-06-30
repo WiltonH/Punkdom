@@ -8,6 +8,7 @@ v0.1 includes Writing Mode, Interactive Mode, premise management, creative Agent
 
 - Added a first-run welcome page with an animated ASCII tesseract and Punkdom wordmark.
 - Made the top-left Punkdom logo reopen the welcome page in the current browser session; press Esc or click the welcome page to enter the workbench.
+- Updated the welcome tesseract to use muted theme text colors and support both hex and RGB CSS color values.
 - Added tagged-release automation that builds and pushes multi-arch Docker images to `ghcr.io/wiltonh/punkdom`.
 - Added `Dockerfile`, `.dockerignore`, and `deploy/docker-compose.yml` for Docker deployment with optional Watchtower auto-updates.
 - Changed the default model from `deepseek-v4-pro` to `deepseek-v4-flash`.
